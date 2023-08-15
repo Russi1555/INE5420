@@ -34,11 +34,10 @@ class MainWindow(QMainWindow):
         b_novo_objeto.clicked.connect(self.novo_objeto)
 
     def novo_objeto(self):
-        nome,coords,inserido = self.take_inputs()
-        if inserido:
-            print(nome,coords)
-            self.objetos[nome] = (wireframe(nome,coords))
-            print(self.objetos[nome])
+        nome,coords = self.take_inputs()
+        print(nome,coords)
+        self.objetos[nome] = (wireframe(nome,coords))
+        print(self.objetos[nome])
 
 
     def take_inputs(self):
@@ -47,7 +46,7 @@ class MainWindow(QMainWindow):
         number_pairs = re.findall(r'\((\d+),(\d+)\)', coords)
         # Transform number pairs into a list of lists
         coords = [[int(x), int(y)] for x, y in number_pairs]
-        return([nome, coords,inserido1 and inserido2])
+        return([nome, coords])
 
     def paintEvent(self, event):
         qp = QtGui.QPainter()
