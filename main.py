@@ -2,6 +2,8 @@ from PyQt5 import QtGui
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton
 from PyQt5.QtCore import Qt
+from wireframe import wireframe
+import re
 import sys
 
 class MainWindow(QMainWindow):
@@ -23,23 +25,58 @@ class MainWindow(QMainWindow):
         self.show()
     
     def UiComponents(self):
+        self.viewport = QtWidgets.QLabel()
+        self.viewport.setGeometry(QtCore.QRect(200,10,990,600))
+
         b_novo_objeto = QPushButton("Novo Objeto", self)
         b_novo_objeto.setGeometry(50,50,100,100)
         b_novo_objeto.setStyleSheet("background-color: white")
         b_novo_objeto.clicked.connect(self.novo_objeto)
 
     def novo_objeto(self):
-        self.wnewobject = Registro_Novo_Obj()
-        self.wnewobject.show()
+        nome,coords,inserido = self.take_inputs()
+        if inserido:
+            print(nome,coords)
+            self.objetos[nome] = (wireframe(nome,coords))
+            print(self.objetos[nome])
+
+
+    def take_inputs(self):
+        nome,inserido1 = QtWidgets.QInputDialog.getText(self, 'Nome do poligono','Digite um nome para o poligono: ')
+        coords,inserido2 = QtWidgets.QInputDialog.getText(self, 'Coordenadas do poligono','Digite as coordenadas do poligono: ')
+        number_pairs = re.findall(r'\((\d+),(\d+)\)', coords)
+        # Transform number pairs into a list of lists
+        coords = [[int(x), int(y)] for x, y in number_pairs]
+        return([nome, coords,inserido1 and inserido2])
 
     def paintEvent(self, event):
         qp = QtGui.QPainter()
         qp.begin(self)
         qp.setPen(QtGui.QPen(Qt.green, 8))
-        qp.drawRect(300,15,885,585)
+        qp.drawRect(self.viewport.x(),self.viewport.y(),self.viewport.width(),self.viewport.height())
+        qp.setPen(QtGui.QPen(Qt.red,4))
+        for nome in self.objetos:
+            #é bunda mas vou fazer a transformação de viewport sempre que for desenhar por enquanto só pra testar
+            x1, y1 = self.objetos[nome].coords[0][0], self.objetos[nome].coords[0][1]
+            x2, y2 = self.objetos[nome].coords[1][0],self.objetos[nome].coords[1][1]
+            xv1 = self.viewport.x() + (x1  * (self.viewport.width()/self.width))
+            yv1 = self.viewport.y() + (y1 * (self.viewport.height()/self.height))
+            xv2 = self.viewport.x() + (x2 * (self.viewport.width()/self.width))
+            yv2 = self.viewport.y() + (y2 * (self.viewport.height()/self.height))
 
 
-class Ui_ChildWindow(object):
+            print(xv1,yv1, xv2, yv2)
+            p1 = QtCore.QPointF(xv1,yv1)
+            p2 = QtCore.QPointF(xv2,yv2)
+            qp.drawLine(p1,p2)
+
+
+class Registro_Novo_Obj(QtWidgets.QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+        self.pushButton.clicked.connect(self.PrintInput)
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(300, 130)
@@ -56,23 +93,19 @@ class Ui_ChildWindow(object):
 
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
         self.label_3.setGeometry(QtCore.QRect(20, 80, 300, 16))
-        self.label_3.setText("obs: Coordenadas em formato x1,y1 x2,y2...")
+        self.label_3.setText("obs: Coordenadas em formato (x1,y1) (x2,y2)...")
 
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setGeometry(QtCore.QRect(20, 100, 251, 23))
         self.pushButton.setObjectName("pushButton")
 
-        self.tipo = QtWidgets.QComboBox(self.centralwidget)
-        self.tipo.addItem("")
-        self.tipo.addItem("Ponto")
-        self.tipo.addItem("Reta")
-        self.tipo.addItem("Poligono")
-        self.tipo.setGeometry(QtCore.QRect(100, 30, 171, 20))
-        self.tipo.setObjectName("Tipo")
+        self.nome = QtWidgets.QLineEdit(self.centralwidget)
+        self.nome.setGeometry(QtCore.QRect(100, 30, 171, 20))
+        self.nome.setObjectName("Nome")
 
-        self.lineEdit_2 = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit_2.setGeometry(QtCore.QRect(100, 60, 171, 20))
-        self.lineEdit_2.setObjectName("Coordenadas")       
+        self.coords = QtWidgets.QLineEdit(self.centralwidget)
+        self.coords.setGeometry(QtCore.QRect(100, 60, 171, 20))
+        self.coords.setObjectName("Coordenadas")       
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.retranslateUi(MainWindow)
@@ -80,18 +113,12 @@ class Ui_ChildWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle("Novo Objeto")
-        self.label.setText("Tipo")
+        self.label.setText("Nome")
         self.label_2.setText("Coordenadas")
         self.pushButton.setText("Criar")
 
-class Registro_Novo_Obj(QtWidgets.QMainWindow, Ui_ChildWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setupUi(self)
-        self.pushButton.clicked.connect(self.PrintInput)
-
     def PrintInput(self):
-        print ([self.tipo.itemText(self.tipo.currentIndex()),self.lineEdit_2.text()])
+        print ([self.nome.text(),self.coords.text()])
         self.close()
 
 
