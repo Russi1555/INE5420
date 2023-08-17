@@ -32,6 +32,29 @@ class MainWindow(QMainWindow):
         self.show()
     
     def New_button(self, label: str, x: int, y: int, w: int, h: int, func: Callable, args: list or None = None) -> QPushButton:
+        """
+        Cria um novo botao
+
+        Args:
+            label (str): Nome.
+            x (int): coordenada x.
+            y (int): coordenada y.
+            w (int): largura.
+            h (int): altura.
+            func (Callable): funcao associada ao botao.
+            args (listorNone, optional): argumentos da funcao.
+
+        Returns:
+            QPushButton: The button created
+        """
+        
+        # Caso o dev seja bobo e coloque (10) como argumento
+        if args:
+            try:
+                iter(args)
+            except TypeError:
+                args = (args,)
+        
         botao = QPushButton(label, self)
         botao.setGeometry(x, y, w, h) 
         botao.setStyleSheet("background-color: white")
@@ -66,21 +89,32 @@ class MainWindow(QMainWindow):
         self.New_button("Novo Objeto", 50,50,100,100, novo_objeto)
 
         # Botoes direcionais
-        self.New_button("↑", 75,185,30,30, self.incrementa_translacao_vertical, (-10,))
-        self.New_button("←", 45,200,30,30, self.incrementa_translacao_horizontal, (-10,))
-        self.New_button("→", 105,200,30,30, self.incrementa_translacao_horizontal, (10,))
-        self.New_button("↓", 75,215,30,30, self.incrementa_translacao_vertical, (10,))
+        self.New_button("↑", 75,185,30,30, self.incrementa_translacao_vertical, (-10))
+        self.New_button("←", 45,200,30,30, self.incrementa_translacao_horizontal, (-10))
+        self.New_button("→", 105,200,30,30, self.incrementa_translacao_horizontal, (10))
+        self.New_button("↓", 75,215,30,30, self.incrementa_translacao_vertical, (10))
 
-    def incrementa_translacao_horizontal(self, value):
-            print(value)
-            for objeto in self.objetos.values():
-                objeto.move(value, 0)
-            self.update()
+    def incrementa_translacao_horizontal(self, value: int):
+        """
+        Move todos os objetos na tela horizontalmente.
+
+        Args:
+            value (int): deslocamento.
+        """
+        for objeto in self.objetos.values():
+            objeto.move(value, 0)
+        self.update()
             
-    def incrementa_translacao_vertical(self, value):
-            for objeto in self.objetos.values():
-                objeto.move(0, value)
-            self.update()
+    def incrementa_translacao_vertical(self, value: int):
+        """
+        Move todos os objetos na tela horizontalmente.
+
+        Args:
+            value (int): delocamento.
+        """
+        for objeto in self.objetos.values():
+            objeto.move(0, value)
+        self.update()
 
     def paintEvent(self, event):
         """

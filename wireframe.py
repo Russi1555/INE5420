@@ -27,16 +27,37 @@ class wireframe:
         self.heigthwin: int = None
     
     def render_to_view(self):
+        """
+        Atualiza a forma com que o objeto deve ser renderizado pela viewport.
+        """
         self.coord_view = []
         for (x, y) in self.coord_world:
             
             self.coord_view.append((self.xvw + (x  * (self.widthvw/self.widthwin)), self.yvw + (y  * (self.heigthvw/self.heigthwin))))
     
     def move(self, x_increment: int, y_increment: int):
+        """
+        Desloca o objeto.
+
+        Args:
+            x_increment (int): deslocamento x.
+            y_increment (int): deslocamento y.
+        """
         for i, (x, y) in enumerate(self.coord_world):
             self.coord_world[i] = (x+x_increment, y+y_increment)
     
     def update_viewport(self, xvw: int, yvw: int, widthvw: int, heigthvw: int, widthwin: int, heigthwin: int) -> None:
+        """
+        Atualiza as informacao da viewport para qual o objeto será renderizado.
+
+        Args:
+            xvw (int): coordenada x da viewport.
+            yvw (int): coordenada y da viewport.
+            widthvw (int): largura da viewport.
+            heigthvw (int): altura da viewport.
+            widthwin (int): largura da janela.
+            heigthwin (int): altura da janela.
+        """
         self.xvw: int = xvw
         self.yvw: int = yvw
         self.widthvw: int = widthvw
@@ -44,11 +65,11 @@ class wireframe:
         self.widthwin: int = widthwin
         self.heigthwin: int = heigthwin
     
-    def points(self):
+    def points(self) -> list[QPointF]:
+        """
+        Retorna uma lista de pontos a serem renderizados. 
+        Returns:
+            list[QPointF]: lista de pontos retornados.
+        """
         self.render_to_view()
         return [QPointF(x,y) for (x, y) in self.coord_view] if not self.closed else [QPointF(x,y) for (x, y) in self.coord_view] + [QPointF(*self.coord_view[0])]
-    
-if __name__ == "__main__":
-    g = wireframe("nome", [(0,0),(10,10),(100,10)])
-    for x, y in g:
-        print(x,y)
