@@ -6,6 +6,26 @@ from PyQt5.QtCore import QPointF
 import numpy as np
 from math import sin, cos, radians
 
+def line_intersection(line1, line2):
+    xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
+    ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
+
+    def det(a, b):
+        return a[0] * b[1] - a[1] * b[0]
+
+    div = det(xdiff, ydiff)
+    if not div: return None, None
+
+    d = (det(*line1), det(*line2))
+    x = det(d, xdiff) / div
+    y = det(d, ydiff) / div
+    l1r, l1l = min(line1[0][0],line1[1][0]), max(line1[0][0],line1[1][0])
+    l1t, l1b = min(line1[0][1],line1[1][1]), max(line1[0][1],line1[1][1])
+    l2r, l2l = min(line2[0][0],line2[1][0]), max(line2[0][0],line2[1][0])
+    l2t, l2b = min(line2[0][1],line2[1][1]), max(line2[0][1],line2[1][1])
+    if not (l1r <= x <= l1l) or not (l1t <= y <= l1b) or not (l2r <= x <= l2l) or not (l2t <= y <= l2b): return None, None
+    return x, y
+
 class wireframe:
     def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False) -> None:
         """Construtor
@@ -17,9 +37,10 @@ class wireframe:
         """
 
         self.label: str = label
-        self.coord_world: list[tuple[int]] = coord_list
+        self.coord_world: list[tuple[int]] = coord_list if not closed else coord_list + [coord_list[0]]
         self.coord_view: list[tuple[int]] = None
-        self.center_point: tuple = (sum(map(lambda e: e[0], coord_list))/len(coord_list), sum(map(lambda e: e[1], coord_list))/len(coord_list))
+        self.intersec_points = list = None
+        self.center_point: tuple = np.array([sum(map(lambda e: e[0], coord_list))/len(coord_list), sum(map(lambda e: e[1], coord_list))/len(coord_list)])
         self.closed: bool = closed
         self.xvw: int = None
         self.yvw: int = None
@@ -32,11 +53,32 @@ class wireframe:
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
+
         self.coord_view = []
+        self.intersec_points = []
+        # Muda as coordenadas para viewport
         for (x, y) in self.coord_world:
-            
             self.coord_view.append((self.xvw + (x  * (self.widthvw/self.widthwin)), self.yvw + (y  * (self.heigthvw/self.heigthwin))))
     
+        # Calcula as intersecoes
+        last_point = None
+
+        vpSE, vpSD, vpID, vpIE = (self.xvw,self.yvw), (self.xvw+self.widthvw,self.yvw), (self.xvw+self.widthvw,self.yvw+self.heigthvw), (self.xvw,self.yvw+self.heigthvw)
+        vplinhas = [(vpSE, vpSD), (vpSD, vpID), (vpID, vpIE), (vpIE, vpSE)]
+
+        # print(self.coord_view)
+        for i, (x, y) in enumerate(self.coord_view):
+            if not i:
+                last_point = (x,y)
+                continue
+            linha = ((x,y),last_point)
+            # print(f"linha {i}: {linha}")
+            for vplinha in vplinhas:
+                xi, yi = line_intersection(linha, vplinha)
+                if not xi is None:
+                    self.intersec_points.append(QPointF(xi,yi))
+            last_point = (x,y)
+
     def center_transformation(self, transformation):
         """
         Recebe uma transformacao e coloca o centro do mundo no centro do objeto para a mesma
@@ -106,7 +148,7 @@ class wireframe:
             list[QPointF]: lista de pontos retornados.
         """
         self.render_to_view()
-        return [QPointF(x,y) for (x, y) in self.coord_view] if not self.closed else [QPointF(x,y) for (x, y) in self.coord_view] + [QPointF(*self.coord_view[0])]
+        return [QPointF(x,y) for (x, y) in self.coord_view]
 
     def transform(self, transform_list: list):
         """
@@ -116,10 +158,15 @@ class wireframe:
             transform_list (list): list of numpy matrixes
         """
 
+        # Junta todas as tranformacoes numa unica matriz
+        matrix = transform_list[0]
+        for i, trans in enumerate(transform_list):
+            if not i: continue
+            matrix = np.matmul(matrix, trans)
+        
+        # Aplica as trasformacoes
         for i, (x, y) in enumerate(self.coord_world):
             vector = np.array([x,y,1])
-            for matrix in transform_list:
-                vector = vector.dot(matrix)
+            vector = vector.dot(matrix)
             self.coord_world[i] = (vector[0], vector[1])
-        self.center_point: tuple = (sum(map(lambda e: e[0], self.coord_world))/len(self.coord_world), sum(map(lambda e: e[1], self.coord_world))/len(self.coord_world))
-        
+        self.center_point: self.center_point.dot(matrix)
