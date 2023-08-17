@@ -49,7 +49,8 @@ class MainWindow(QMainWindow):
             coords = [(int(x), int(y)) for x, y in re.findall(r'\((\d+),(\d+)\)', coords)]
             
             if report: print(nome,coords)
-            self.objetos[nome] = (wireframe(nome,coords))
+            self.objetos[nome]: wireframe = wireframe(nome,coords, True)
+            self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
             if report: print(self.objetos[nome])
             self.update()
         
@@ -64,74 +65,21 @@ class MainWindow(QMainWindow):
         """
         qp = QtGui.QPainter()
         qp.begin(self)
-        qp.setPen(QtGui.QPen(Qt.green, 8))
+        # Desenha o retangulo verde da viewport
+        qp.setPen(QtGui.QPen(Qt.green, 1))
         qp.drawRect(self.viewport.x(),self.viewport.y(),self.viewport.width(),self.viewport.height())
+        
         qp.setPen(QtGui.QPen(Qt.red,4))
-        for nome in self.objetos:
+        for nome, objeto in self.objetos.items():
             #é bunda mas vou fazer a transformação de viewport sempre que for desenhar por enquanto só pra testar
-            x1, y1 = self.objetos[nome].coords[0][0], self.objetos[nome].coords[0][1]
-            x2, y2 = self.objetos[nome].coords[1][0],self.objetos[nome].coords[1][1]
-            xv1 = self.viewport.x() + (x1  * (self.viewport.width()/self.window_width))
-            yv1 = self.viewport.y() + (y1 * (self.viewport.height()/self.window_height))
-            xv2 = self.viewport.x() + (x2 * (self.viewport.width()/self.window_width))
-            yv2 = self.viewport.y() + (y2 * (self.viewport.height()/self.window_height))
 
-
-            print(xv1,yv1, xv2, yv2)
-            p1 = QtCore.QPointF(xv1,yv1)
-            p2 = QtCore.QPointF(xv2,yv2)
-            qp.drawLine(p1,p2)
-
-
-class Registro_Novo_Obj(QtWidgets.QMainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setupUi(self)
-        self.pushButton.clicked.connect(self.PrintInput)
-
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(300, 130)
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
-
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(20, 30, 71, 16))
-        self.label.setObjectName("label")
-
-        self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(20, 60, 71, 16))
-        self.label_2.setObjectName("label_2")
-
-        self.label_3 = QtWidgets.QLabel(self.centralwidget)
-        self.label_3.setGeometry(QtCore.QRect(20, 80, 300, 16))
-        self.label_3.setText("obs: Coordenadas em formato (x1,y1) (x2,y2)...")
-
-        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(20, 100, 251, 23))
-        self.pushButton.setObjectName("pushButton")
-
-        self.nome = QtWidgets.QLineEdit(self.centralwidget)
-        self.nome.setGeometry(QtCore.QRect(100, 30, 171, 20))
-        self.nome.setObjectName("Nome")
-
-        self.coords = QtWidgets.QLineEdit(self.centralwidget)
-        self.coords.setGeometry(QtCore.QRect(100, 60, 171, 20))
-        self.coords.setObjectName("Coordenadas")       
-
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
-    def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle("Novo Objeto")
-        self.label.setText("Nome")
-        self.label_2.setText("Coordenadas")
-        self.pushButton.setText("Criar")
-
-    def PrintInput(self):
-        print ([self.nome.text(),self.coords.text()])
-        self.close()
+            last_point = None
+            for i, point in enumerate(objeto.points()):
+                if not i: 
+                    last_point = point
+                    continue
+                qp.drawLine(last_point, point)
+                last_point = point
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
