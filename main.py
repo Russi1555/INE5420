@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt
 from wireframe import wireframe
 import re
 import sys
+from collections.abc import Callable
 
 report = True
 
@@ -30,6 +31,13 @@ class MainWindow(QMainWindow):
         self.UiComponents()
         self.show()
     
+    def New_button(self, label: str, x: int, y: int, w: int, h: int, func: Callable, args: list or None = None) -> QPushButton:
+        botao = QPushButton(label, self)
+        botao.setGeometry(x, y, w, h) 
+        botao.setStyleSheet("background-color: white")
+        if args: botao.clicked.connect(lambda: func(*args))
+        else: botao.clicked.connect(lambda: func())
+    
     def UiComponents(self):
         """
         Inicia os componentes padroes da janela principal.
@@ -54,10 +62,25 @@ class MainWindow(QMainWindow):
             if report: print(self.objetos[nome])
             self.update()
         
-        botao_novo_objeto = QPushButton("Novo Objeto", self)
-        botao_novo_objeto.setGeometry(50,50,100,100)
-        botao_novo_objeto.setStyleSheet("background-color: white")
-        botao_novo_objeto.clicked.connect(novo_objeto)
+        # Botao de novo objeto
+        self.New_button("Novo Objeto", 50,50,100,100, novo_objeto)
+
+        # Botoes direcionais
+        self.New_button("↑", 75,185,30,30, self.incrementa_translacao_vertical, (-10,))
+        self.New_button("←", 45,200,30,30, self.incrementa_translacao_horizontal, (-10,))
+        self.New_button("→", 105,200,30,30, self.incrementa_translacao_horizontal, (10,))
+        self.New_button("↓", 75,215,30,30, self.incrementa_translacao_vertical, (10,))
+
+    def incrementa_translacao_horizontal(self, value):
+            print(value)
+            for objeto in self.objetos.values():
+                objeto.move(value, 0)
+            self.update()
+            
+    def incrementa_translacao_vertical(self, value):
+            for objeto in self.objetos.values():
+                objeto.move(0, value)
+            self.update()
 
     def paintEvent(self, event):
         """
