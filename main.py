@@ -96,7 +96,7 @@ class MainWindow(QMainWindow):
 
         # Botao de etica e encolhe
         self.New_button(">", 55,260,30,30, self.estica, (1.5))
-        self.New_button("<", 95,260,30,30, self.estica, (-1.5))
+        self.New_button("<", 95,260,30,30, self.estica, (1/1.5))
 
         # Botao de giro
         self.New_button("O", 75,320,30,30, self.girar, (30))

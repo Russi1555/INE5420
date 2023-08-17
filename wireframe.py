@@ -44,7 +44,9 @@ class wireframe:
         Args:
             transformation (matriz): matriz transormacao. 
         """
-        trans = np.array([[1,0,0],[0,1,0],[self.xvw-self.center_point[0], self.yvw-self.center_point[1], 1]])
+        trans = np.array([[1,0,0],
+                        [0,1,0],
+                        [-self.center_point[0], -self.center_point[1], 1]])
         trans = np.matmul(trans, transformation)
         return np.matmul(trans, np.array([[1,0,0],[0,1,0],[self.center_point[0], self.center_point[1], 1]]))
 
@@ -119,3 +121,5 @@ class wireframe:
             for matrix in transform_list:
                 vector = vector.dot(matrix)
             self.coord_world[i] = (vector[0], vector[1])
+        self.center_point: tuple = (sum(map(lambda e: e[0], self.coord_world))/len(self.coord_world), sum(map(lambda e: e[1], self.coord_world))/len(self.coord_world))
+        
