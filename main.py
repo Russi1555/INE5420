@@ -94,6 +94,13 @@ class MainWindow(QMainWindow):
         self.New_button("→", 105,200,30,30, self.incrementa_translacao_horizontal, (10))
         self.New_button("↓", 75,215,30,30, self.incrementa_translacao_vertical, (10))
 
+        # Botao de etica e encolhe
+        self.New_button(">", 55,260,30,30, self.estica, (1.5))
+        self.New_button("<", 95,260,30,30, self.estica, (-1.5))
+
+        # Botao de giro
+        self.New_button("O", 75,320,30,30, self.girar, (30))
+
     def incrementa_translacao_horizontal(self, value: int):
         """
         Move todos os objetos na tela horizontalmente.
@@ -102,7 +109,7 @@ class MainWindow(QMainWindow):
             value (int): deslocamento.
         """
         for objeto in self.objetos.values():
-            objeto.move(value, 0)
+            objeto.translade(value, 0)
         self.update()
             
     def incrementa_translacao_vertical(self, value: int):
@@ -113,7 +120,29 @@ class MainWindow(QMainWindow):
             value (int): delocamento.
         """
         for objeto in self.objetos.values():
-            objeto.move(0, value)
+            objeto.translade(0, value)
+        self.update()
+
+    def estica(self, value: int):
+        """
+        Estica todos os objetos ao redor do proprio centro.
+
+        Args:
+            value (int): fator de estique.
+        """
+        for objeto in self.objetos.values():
+            objeto.stretch(value, value)
+        self.update()
+    
+    def girar(self, angle: int):
+        """
+        Gira todos os objetos ao redor do proprio centro.
+
+        Args:
+            value (int): angulo
+        """
+        for objeto in self.objetos.values():
+            objeto.rotate(angle)
         self.update()
 
     def paintEvent(self, event):
