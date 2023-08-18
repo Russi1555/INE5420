@@ -6,8 +6,6 @@ import re
 import sys
 from collections.abc import Callable
 
-report = True
-
 class MainWindow(QMainWindow):
     """
     Janela principal do programa.
@@ -79,10 +77,8 @@ class MainWindow(QMainWindow):
             # Transform number pairs into a list of lists
             coords = [(int(x), int(y)) for x, y in re.findall(r'\((\d+),(\d+)\)', coords)]
             
-            if report: print(nome,coords)
             self.objetos[nome]: wireframe = wireframe(nome,coords, False)
             self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
-            if report: print(self.objetos[nome])
             self.update()
         
         # Botao de novo objeto
@@ -155,18 +151,29 @@ class MainWindow(QMainWindow):
         qp.setPen(QtGui.QPen(Qt.green, 1))
         qp.drawRect(self.viewport.x(),self.viewport.y(),self.viewport.width(),self.viewport.height())
         
+        # Itera sobre os wireframes
         for nome, objeto in self.objetos.items():
             qp.setPen(QtGui.QPen(Qt.red,4))
             last_point = None
-            for i, point in enumerate(objeto.points()):
-                if not i: 
+            last_point_sees_next = False
+
+            # Desenha as linhas do objeto
+            for i, (point, sees_next) in enumerate(objeto.points):
+                if not i:
                     last_point = point
+                    last_point_sees_next = sees_next
                     continue
-                qp.drawLine(last_point, point)
+                if last_point_sees_next: qp.drawLine(last_point, point)
                 last_point = point
-            qp.setPen(QtGui.QPen(Qt.yellow,4))
-            for point in objeto.intersec_points:
-                qp.drawPoint(point)
+                last_point_sees_next = sees_next
+            # qp.setPen(QtGui.QPen(Qt.blue,4))
+            # for point in objeto.outersec_points:
+            #     qp.drawPoint(point)
+            
+            # Desenha os pontos de intersecao 
+            # qp.setPen(QtGui.QPen(Qt.yellow,4))
+            # for point in objeto.intersec_points:
+            #     qp.drawPoint(point)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
