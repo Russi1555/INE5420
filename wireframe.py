@@ -125,15 +125,15 @@ class wireframe:
         # Gera os pontos objeto finais
         self.clipped_points = list(map(lambda e: (QPointF(*e["coord"]), e["sees"]), self.clipped_points))
 
-    def center_transformation(self, transformation, center: tuple[int] = None):
+    def center_transformation(self, transformation, center: tuple[int] = (None, None)):
         """
         Recebe uma transformacao e coloca o centro do mundo no centro do objeto para a mesma
 
         Args:
             transformation (matriz): matriz transormacao. 
         """
-        x = 0 if center is None else -center[0]+self.center_point[0]
-        y = 0 if center is None else -center[1]+self.center_point[1]
+        x = 0 if None in center else -center[0]+self.center_point[0]
+        y = 0 if None in center else -center[1]+self.center_point[1]
         trans = np.array([[1,0,0],
                         [0,1,0],
                         [x-self.center_point[0], y-self.center_point[1], 1]])
@@ -150,7 +150,7 @@ class wireframe:
         """
         self.transform([np.array([[1,0,0],[0,1,0],[x_increment, y_increment, 1]])])
     
-    def stretch(self, x_factor: int, y_factor: int, center: tuple[int] = None):
+    def stretch(self, x_factor: int, y_factor: int, center: tuple[int] = (None, None)):
         """
         Estica o objeto
 
@@ -162,7 +162,7 @@ class wireframe:
         matrix = np.array([[x_factor,0,0],[0,y_factor,0],[0,0,1]])
         self.transform([self.center_transformation(matrix, center=center)])
     
-    def rotate(self, angle: float, center: tuple[int] = None):
+    def rotate(self, angle: float, center: tuple[int] = (None, None)):
         """
         Rotates the object by an angle.
 

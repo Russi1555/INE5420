@@ -68,16 +68,17 @@ class WindowInput(QMainWindow):
         self.close()
 
 class ListWidget(QtWidgets.QListWidget, QMainWindow):
+    """
+    Widget especializado para a listagem de objetos no canvas.
+    Responsavel por determinar que objetos estao selecionados.
+    """
     def __init__(self, mainwindow):
         super().__init__(mainwindow)
         self.mainwindow = mainwindow
 
     def clicked(self, item):
-        print(str(item.text()))
         self.mainwindow.objetos[str(item.text())].selecionado = not self.mainwindow.objetos[str(item.text())].selecionado
         self.mainwindow.update()
-        print(self.mainwindow.objetos[str(item.text())].selecionado)
-        #return str(item.text())
 
 class MainWindow(QMainWindow):
     """
@@ -96,6 +97,7 @@ class MainWindow(QMainWindow):
         self.window_width = 1200
         self.window_height = 800
         self.setGeometry(self.top, self.left, self.window_width, self.window_height)
+        
         #transformation quantities
         self.tqt: float = 0 #translation
         self.sqt: float = 0 #stretch
@@ -111,12 +113,11 @@ class MainWindow(QMainWindow):
         self.show()
     
     @property
-    def cx(self):
-        return None if self.center_x.text() == "" else float(self.center_x.text())
-    
-    @property
-    def cy(self):
-        return None if self.center_y.text() == "" else float(self.center_y.text())
+    def center_point(self):
+        """
+        Getter do ponto central
+        """
+        return (None if self.center_x.text() == "" else float(self.center_x.text()), None if self.center_y.text() == "" else float(self.center_y.text()))
 
     def New_button(self, label: str, x: int, y: int, w: int, h: int, func: Callable, args: list or None = None) -> QPushButton:
         """
@@ -171,16 +172,10 @@ class MainWindow(QMainWindow):
             #self.objetos[nome]: wireframe = wireframe(nome,coords, False)
             #self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
             #self.update()
-        
-        def set_selecionado(nome):
-            self.objetos[nome].selecionado = not self.objetos[nome].selecionado
 
         self.lista_objetos = ListWidget(self)
         self.lista_objetos.setGeometry(10,55,180,200)
         x = self.lista_objetos.itemClicked.connect(self.lista_objetos.clicked)
-        print("HAHAHA " + str(x))
-        #print(self.objetos[self.lista_objetos.item.text()].selecionado)
-        
         # Botao de novo objeto
         self.New_button("Novo Objeto", 50,20,100,30, novo_objeto)
 
@@ -221,7 +216,6 @@ class MainWindow(QMainWindow):
         self.render_center_point = QCheckBox(self)
         self.render_center_point.setGeometry(atx + 105, aty + 180, 15,15)
  
-    
     def WindowInput(self):                                             # <===
         self.w = WindowInput()
         self.w.submitClicked.connect(self.instanciarNovoObjeto) #Quando recebe o sinal submitClicked, passa a mensagem como parametro para InstanciarNovoObjeto
@@ -248,7 +242,6 @@ class MainWindow(QMainWindow):
             value (int): delocamento.
         """
         tqt = 0 if self.tqt.text() == '' else float(self.tqt.text())
-        print(tqt)
 
         args = (tqt if dir == "dir" else -tqt if dir == "esq" else 0, tqt if dir == "bax" else -tqt if dir == "cim" else 0)
 
@@ -265,10 +258,9 @@ class MainWindow(QMainWindow):
             center (tuple): Centro da transformacao.
         """
         value = 1 if self.sqt.text() == '' else float(self.sqt.text()) ** tipo
-        center = None if self.cx is None or self.cy is None else (self.cx, self.cy)
         for objeto in self.objetos.values():
 
-            objeto.stretch(value, value, center)
+            objeto.stretch(value, value, self.center_point)
         self.update()
     
     def girar(self):
@@ -280,24 +272,28 @@ class MainWindow(QMainWindow):
             center(tuple): Ponto Cental da rotacao.
         """
         angle = 0 if self.rqt.text() == '' else -float(self.rqt.text())
-        center = None if self.cx is None or self.cy is None else (self.cx, self.cy)
         for objeto in self.objetos.values():
-            objeto.rotate(angle, center)
+            objeto.rotate(angle, self.center_point)
         self.update()
 
     def paintEvent(self, event):
         qp = QtGui.QPainter()
         qp.begin(self)
-        # Desenha o retangulo verde da viewport
+
+        # Desenha o retangulo preto da viewport
         qp.setPen(QtGui.QPen(Qt.black, 1))
         qp.setBrush(QtGui.QBrush(Qt.white, Qt.SolidPattern))
         qp.drawRect(self.viewport.x(),self.viewport.y(),self.viewport.width(),self.viewport.height())
         
-        if int(self.render_center_point.checkState()) == 2 and not self.cx is None and not self.cy is None:
+        # Renderiza o centro de transformacoes caso ele exista e esteja selecionado
+        if int(self.render_center_point.checkState()) == 2 and None not in self.center_point:
             qp.setPen(QtGui.QPen(Qt.black, 4))
-            qp.drawPoint(QtCore.QPointF(float(self.cx)+self.viewport.x(),float(self.cy)+self.viewport.y()))
+            cx, cy = self.center_point[0], self.center_point[1]
+            center_in_view = (self.viewport.x() + (cx  * (self.viewport.width()/self.window_width)), self.viewport.y() + (cy  * (self.viewport.height()/self.window_height)))
+            qp.drawPoint(QtCore.QPointF(*center_in_view))
             self.update()
-        # Itera sobre os wireframes
+
+        # Itera sobre os wireframes renderizando-os
         for nome, objeto in self.objetos.items():
             if self.objetos[nome].selecionado:
                 qp.setPen(QtGui.QPen(Qt.red,4))
@@ -315,14 +311,6 @@ class MainWindow(QMainWindow):
                 if last_point_sees_next: qp.drawLine(last_point, point)
                 last_point = point
                 last_point_sees_next = sees_next
-            # qp.setPen(QtGui.QPen(Qt.blue,4))
-            # for point in objeto.outersec_points:
-            #     qp.drawPoint(point)
-            
-            # Desenha os pontos de intersecao 
-            # qp.setPen(QtGui.QPen(Qt.yellow,4))
-            # for point in objeto.intersec_points:
-            #     qp.drawPoint(point)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
