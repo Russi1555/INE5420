@@ -143,9 +143,12 @@ class MainWindow(QMainWindow):
             #self.objetos[nome]: wireframe = wireframe(nome,coords, False)
             #self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
             #self.update()
+
+        self.lista_objetos = QtWidgets.QListWidget(self)
+        self.lista_objetos.setGeometry(10,55,180,200)
         
         # Botao de novo objeto
-        self.New_button("Novo Objeto", 50,50,100,100, novo_objeto)
+        self.New_button("Novo Objeto", 50,20,100,30, novo_objeto)
 
         # Botoes direcionais
         self.New_button("↑", 75,185,30,30, self.incrementa_translacao_vertical, (-10))
@@ -168,6 +171,7 @@ class MainWindow(QMainWindow):
     def instanciarNovoObjeto(self, pacote_n_c):
         nome = pacote_n_c[0]
         coords =  pacote_n_c[1]
+        self.lista_objetos.addItem(str(nome))
         if nome =="" or coords == "":
             print("VALORES INVALIDOS")
         else:

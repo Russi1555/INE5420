@@ -60,6 +60,7 @@ class wireframe:
         self.heigthvw: int = None
         self.widthwin: int = None
         self.heigthwin: int = None
+        self.selecionado: bool = False
     
     @property
     def points(self):
