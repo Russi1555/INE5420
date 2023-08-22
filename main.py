@@ -12,7 +12,6 @@ class WindowInput(QMainWindow):
     '''
     submitClicked = QtCore.pyqtSignal(tuple) #Sinal para transferência de dados entre janelas do PyQt
     def __init__(self, parent = None):
-        super().__init__()
         super().__init__(parent)
         self.nome = ""
         self.coords = ""
@@ -20,51 +19,54 @@ class WindowInput(QMainWindow):
         self.pushButton.clicked.connect(self.PrintInput)
 
     def setupUi(self, MainWindow):
+        
+        def plain_text(text: str, dim: tuple):
+            widget = QtWidgets.QLabel(self.centralwidget)
+            widget.setGeometry(QtCore.QRect(*dim))
+            widget.setObjectName(text)
+            widget.setText(text)
+
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(300, 130)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(20, 30, 71, 16))
-        self.label.setObjectName("label")
+        # Texto puro da janela
+        plain_text("Nome", (20, 30, 71, 16))
+        plain_text("Coordenadas", (20, 60, 71, 16))
+        plain_text("obs: Coordenadas em formato (x1,y1) (x2,y2)...", (20, 80, 300, 16))
 
-        self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(20, 60, 71, 16))
-        self.label_2.setObjectName("label_2")
-
-        self.label_3 = QtWidgets.QLabel(self.centralwidget)
-        self.label_3.setGeometry(QtCore.QRect(20, 80, 300, 16))
-        self.label_3.setText("obs: Coordenadas em formato (x1,y1) (x2,y2)...")
-
+        # Botao de criar objeto
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setGeometry(QtCore.QRect(20, 100, 251, 23))
         self.pushButton.setObjectName("pushButton")
+        self.pushButton.setText("Criar")
 
+        # Leitor do nome
         self.nome = QtWidgets.QLineEdit(self.centralwidget)
         self.nome.setGeometry(QtCore.QRect(100, 30, 171, 20))
         self.nome.setObjectName("Nome")
 
+        # Leitor das coordenadas
         self.coords = QtWidgets.QLineEdit(self.centralwidget)
         self.coords.setGeometry(QtCore.QRect(100, 60, 171, 20))
         self.coords.setObjectName("Coordenadas")       
 
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        # Checbox de check poligon
+        self.close_polygon = QCheckBox(self.centralwidget)
+        self.close_polygon.setGeometry(275, 63, 15, 15)
 
-    def retranslateUi(self, MainWindow):
+        # Dados sobre a Janela
+        MainWindow.setCentralWidget(self.centralwidget)
         MainWindow.setWindowTitle("Novo Objeto")
-        self.label.setText("Nome")
-        self.label_2.setText("Coordenadas")
-        self.pushButton.setText("Criar")
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def PrintInput(self):
         '''
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
-        print ([self.nome.text(),self.coords.text()])
-        self.submitClicked.emit((self.nome.text(), self.coords.text()))
+        # print (self.nome.text(), self.coords.text(), self.close_polygon.checkState())
+        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2))
         self.close()
 
 class ListWidget(QtWidgets.QListWidget, QMainWindow):
@@ -162,7 +164,6 @@ class MainWindow(QMainWindow):
             Funcao de leitura do botao de novo objeto.
             Invoca a janela de input.
             """
-            global report
             self.WindowInput()
             #nome, _ = QtWidgets.QInputDialog.getText(self, 'Nome do poligono','Digite um nome para o poligono: ')
             #coords, _ = QtWidgets.QInputDialog.getText(self, 'Coordenadas do poligono','Digite as coordenadas do poligono: ')
@@ -216,7 +217,7 @@ class MainWindow(QMainWindow):
         self.render_center_point = QCheckBox(self)
         self.render_center_point.setGeometry(atx + 105, aty + 180, 15,15)
  
-    def WindowInput(self):                                             # <===
+    def WindowInput(self):
         self.w = WindowInput()
         self.w.submitClicked.connect(self.instanciarNovoObjeto) #Quando recebe o sinal submitClicked, passa a mensagem como parametro para InstanciarNovoObjeto
         self.w.show()
@@ -224,13 +225,15 @@ class MainWindow(QMainWindow):
     def instanciarNovoObjeto(self, pacote_n_c):
         nome = pacote_n_c[0]
         coords =  pacote_n_c[1]
+        close = pacote_n_c[2]
         self.lista_objetos.addItem(str(nome))
+
         if nome =="" or coords == "":
             print("VALORES INVALIDOS")
         else:
             coords = [(int(x), int(y)) for x, y in re.findall(r'\((\d+),(\d+)\)', coords)]
                 
-            self.objetos[nome]: wireframe = wireframe(nome,coords, False)
+            self.objetos[nome]: wireframe = wireframe(nome,coords, close)
             self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
             self.update()
             
