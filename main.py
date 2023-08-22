@@ -192,13 +192,13 @@ class MainWindow(QMainWindow):
         # Botao de estica e encolhe
         self.sqt = QtWidgets.QLineEdit(self)
         self.sqt.setGeometry(atx + 100, aty + 75, 30,30)
-        self.New_button(">", atx+10,aty+75,30,30, self.estica, (1))
-        self.New_button("<", atx+50,aty+75,30,30, self.estica, (-1))
+        self.New_button("□", atx+10,aty+75,30,30, self.estica, (1))
+        self.New_button("▫", atx+50,aty+75,30,30, self.estica, (-1))
 
         # Botao de giro
         self.rqt = QtWidgets.QLineEdit(self)
         self.rqt.setGeometry(atx + 100, aty + 120, 30,30)
-        self.New_button("O", atx+30,aty+120,30,30, self.girar, ())
+        self.New_button("↻", atx+30,aty+120,30,30, self.girar, ())
 
         # Centro de transformação
         label_center_x = QtWidgets.QLabel(self)
