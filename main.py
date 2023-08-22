@@ -203,32 +203,31 @@ class MainWindow(QMainWindow):
             objeto.translade(0, value)
         self.update()
 
-    def estica(self, value: int):
+    def estica(self, value: int, center: tuple):
         """
         Estica todos os objetos ao redor do proprio centro.
 
         Args:
-            value (int): fator de estique.
+            value (int): Fator de estique.
+            center (tuple): Centro da transformacao.
         """
         for objeto in self.objetos.values():
-            objeto.stretch(value, value)
+            objeto.stretch(value, value, center)
         self.update()
     
-    def girar(self, angle: int):
+    def girar(self, angle: int, center: tuple):
         """
         Gira todos os objetos ao redor do proprio centro.
 
         Args:
-            value (int): angulo
+            value (int): Angulo.
+            center(tuple): Ponto Cental da rotacao.
         """
         for objeto in self.objetos.values():
-            objeto.rotate(angle)
+            objeto.rotate(angle, center)
         self.update()
 
     def paintEvent(self, event):
-        """
-        Eu nao tenho certeza de quando exatamente isso aqui eh chamado.
-        """
         qp = QtGui.QPainter()
         qp.begin(self)
         # Desenha o retangulo verde da viewport
