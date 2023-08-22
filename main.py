@@ -184,10 +184,10 @@ class MainWindow(QMainWindow):
         self.tqt = QtWidgets.QLineEdit(self) #quantidade pra mexer
         self.tqt.setGeometry(atx + 100, aty + 15, 30,30)
         
-        self.New_button("↑", atx+30,aty,30,30, self.incrementa_translacao, ("cim",))
-        self.New_button("←", atx,aty+15,30,30, self.incrementa_translacao, ("esq",))
-        self.New_button("→", atx+60,aty+15,30,30, self.incrementa_translacao, ("dir",))
-        self.New_button("↓", atx+30,aty+30,30,30, self.incrementa_translacao, ("bax",))
+        self.New_button("↑", atx+30,aty,30,30, self.translacao, ("cim",))
+        self.New_button("←", atx,aty+15,30,30, self.translacao, ("esq",))
+        self.New_button("→", atx+60,aty+15,30,30, self.translacao, ("dir",))
+        self.New_button("↓", atx+30,aty+30,30,30, self.translacao, ("bax",))
 
         # Botao de estica e encolhe
         self.sqt = QtWidgets.QLineEdit(self)
@@ -234,7 +234,7 @@ class MainWindow(QMainWindow):
             self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
             self.update()
             
-    def incrementa_translacao(self, dir: str):
+    def translacao(self, dir: str):
         """
         Move todos os objetos na tela horizontalmente.
 
@@ -246,6 +246,7 @@ class MainWindow(QMainWindow):
         args = (tqt if dir == "dir" else -tqt if dir == "esq" else 0, tqt if dir == "bax" else -tqt if dir == "cim" else 0)
 
         for objeto in self.objetos.values():
+            if not objeto.selecionado: continue
             objeto.translade(*args)
         self.update()
 
@@ -259,7 +260,7 @@ class MainWindow(QMainWindow):
         """
         value = 1 if self.sqt.text() == '' else float(self.sqt.text()) ** tipo
         for objeto in self.objetos.values():
-
+            if not objeto.selecionado: continue
             objeto.stretch(value, value, self.center_point)
         self.update()
     
@@ -273,6 +274,7 @@ class MainWindow(QMainWindow):
         """
         angle = 0 if self.rqt.text() == '' else -float(self.rqt.text())
         for objeto in self.objetos.values():
+            if not objeto.selecionado: continue
             objeto.rotate(angle, self.center_point)
         self.update()
 
