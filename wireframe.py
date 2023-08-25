@@ -3,6 +3,7 @@ Modulo com as primitivas graficas.
 """
 
 from PyQt5.QtCore import QPointF
+from PyQt5.QtGui import QColor
 import numpy as np
 from math import sin, cos, radians
 
@@ -37,13 +38,14 @@ def distancia_eucl(ponto1, ponto2):
     return ((ponto1[0]-ponto2[0])**2 + (ponto1[1]-ponto2[1])**2) ** (1/2)
 
 class wireframe:
-    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False) -> None:
+    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor) -> None:
         """Construtor
 
         Args:
             label (str): Nome da primitiva grafica.
             coord_list (list[tuple[int]]): Lista de pontos da primitiva.
             closed (bool): Se o ponto final deve ser ligado ao ponto inicial ou nao.
+            color (QColor): Cor do objeto
         """
 
         self.label: str = label
@@ -61,6 +63,7 @@ class wireframe:
         self.widthwin: int = None
         self.heigthwin: int = None
         self.selecionado: bool = False
+        self.color: QColor = color #Vermelho como valor padrão
     
     @property
     def points(self):

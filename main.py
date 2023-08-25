@@ -27,7 +27,7 @@ class WindowInput(QMainWindow):
             widget.setText(text)
 
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(300, 130)
+        MainWindow.resize(300, 200)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
@@ -35,10 +35,24 @@ class WindowInput(QMainWindow):
         plain_text("Nome", (20, 30, 71, 16))
         plain_text("Coordenadas", (20, 60, 71, 16))
         plain_text("obs: Coordenadas em formato (x1,y1) (x2,y2)...", (20, 80, 300, 16))
+        plain_text("Cor:  R:           G:           B:", (20,100,200,16))
+
+        # Leitores da cor
+        self.r = QtWidgets.QLineEdit(self.centralwidget)
+        self.r.setGeometry(QtCore.QRect(66,100,30,16))
+        self.r.setObjectName("R")
+
+        self.g = QtWidgets.QLineEdit(self.centralwidget)
+        self.g.setGeometry(QtCore.QRect(126,100,30,16))
+        self.g.setObjectName("G")
+
+        self.b = QtWidgets.QLineEdit(self.centralwidget)
+        self.b.setGeometry(QtCore.QRect(186,100,30,16))
+        self.b.setObjectName("B")
 
         # Botao de criar objeto
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(20, 100, 251, 23))
+        self.pushButton.setGeometry(QtCore.QRect(20, 130, 251, 23))
         self.pushButton.setObjectName("pushButton")
         self.pushButton.setText("Criar")
 
@@ -66,7 +80,7 @@ class WindowInput(QMainWindow):
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
         # print (self.nome.text(), self.coords.text(), self.close_polygon.checkState())
-        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2))
+        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()]))
         self.close()
 
 class ListWidget(QtWidgets.QListWidget, QMainWindow):
@@ -223,14 +237,23 @@ class MainWindow(QMainWindow):
         nome = pacote_n_c[0]
         coords =  pacote_n_c[1]
         close = pacote_n_c[2]
+        cor = pacote_n_c[3]
         self.lista_objetos.addItem(str(nome))
+        if cor[0]==cor[1]==cor[2] and cor[0]=="":
+            cor = QtGui.QColor(255,0,0)
+        else:
+            for x in range(len(cor)):
+                if cor[x] == "":
+                    cor[x] = 0
+            cor = list(map(int,cor))
+            cor = QtGui.QColor(cor[0],cor[1],cor[2])
 
         if nome =="" or coords == "":
             print("VALORES INVALIDOS")
         else:
             coords = [(int(x), int(y)) for x, y in re.findall(r'\((\d+),(\d+)\)', coords)]
                 
-            self.objetos[nome]: wireframe = wireframe(nome,coords, close)
+            self.objetos[nome]: wireframe = wireframe(nome,coords, close,cor)
             self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
             self.update()
             
@@ -298,9 +321,9 @@ class MainWindow(QMainWindow):
         # Itera sobre os wireframes renderizando-os
         for nome, objeto in self.objetos.items():
             if self.objetos[nome].selecionado:
-                qp.setPen(QtGui.QPen(Qt.red,4))
+                qp.setPen(QtGui.QPen(self.objetos[nome].color,4))
             else:
-                qp.setPen(QtGui.QPen(Qt.red,1))
+                qp.setPen(QtGui.QPen(self.objetos[nome].color,1))
             last_point = None
             last_point_sees_next = False
 
