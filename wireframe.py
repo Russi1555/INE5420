@@ -34,10 +34,27 @@ def line_intersection(line1, line2, paint = False):
             return None, None
     return x, y
 
+def unit_vector(vector):
+    return vector / np.linalg.norm(vector)
+
+def angle_between(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2'::
+
+            >>> angle_between((1, 0, 0), (0, 1, 0))
+            1.5707963267948966
+            >>> angle_between((1, 0, 0), (1, 0, 0))
+            0.0
+            >>> angle_between((1, 0, 0), (-1, 0, 0))
+            3.141592653589793
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
 def distancia_eucl(ponto1, ponto2):
     return ((ponto1[0]-ponto2[0])**2 + (ponto1[1]-ponto2[1])**2) ** (1/2)
 
-class wireframe:
+class Wireframe:
     def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor) -> None:
         """Construtor
 
@@ -65,12 +82,11 @@ class wireframe:
         self.selecionado: bool = False
         self.color: QColor = color #Vermelho como valor padrão
     
-    @property
-    def points(self):
-        self.render_to_view()
+    def points(self, world_view = False):
+        self.render_to_view(world_view)
         return self.clipped_points
-    
-    def render_to_view(self):
+
+    def render_to_view(self, world_view = False):
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
@@ -80,10 +96,15 @@ class wireframe:
         self.clipped_points = []
         # self.outersec_points = []
 
-        # Muda as coordenadas para viewport
-        for (x, y) in self.coord_world:
-            self.coord_view.append((self.xvw + (x  * (self.widthvw/self.widthwin)), self.yvw + (y  * (self.heigthvw/self.heigthwin))))
-    
+        if world_view:
+            for (x, y) in self.coord_world:
+                self.coord_view.append((self.xvw + (x  * (self.widthvw/self.widthwin)), self.yvw + (y  * (self.heigthvw/self.heigthwin))))
+
+        else:
+            # Muda as coordenadas para viewport
+            for (x, y) in self.window.to_window_coords(self.coord_world):
+                self.coord_view.append((self.xvw + ((1+x)  * (self.widthvw/2)), self.yvw + ((1+y)  * (self.heigthvw/2))))
+
         # Linhas que compoe a viewport
         vpSE, vpSD, vpID, vpIE = (self.xvw,self.yvw), (self.xvw+self.widthvw,self.yvw), (self.xvw+self.widthvw,self.yvw+self.heigthvw), (self.xvw,self.yvw+self.heigthvw)
         vplinhas = [(vpSE, vpSD), (vpSD, vpID), (vpID, vpIE), (vpIE, vpSE)]
@@ -195,6 +216,9 @@ class wireframe:
         self.widthwin: int = widthwin
         self.heigthwin: int = heigthwin
 
+    def update_window(self, window):
+        self.window = window
+
     def transform(self, transform_list: list):
         """
         Transforms the objects
@@ -219,3 +243,42 @@ class wireframe:
     
     def point_in_viewport(self, point: tuple[int]):
         return self.xvw <= point[0] <= self.xvw+self.widthvw and self.yvw <= point[1] <= self.yvw+self.heigthvw
+
+class ViewWindow(Wireframe):
+    def __init__(self, x0: float, y0: float, width: float, heigth: float) -> None:
+        self.SE = (x0, y0)
+        self.SD = (x0+width, y0)
+        self.ID = (x0+width, y0+heigth)
+        self.IE = (x0, y0+heigth)
+        self.width = width
+        self.heigth = heigth
+        self.angle = 0
+        super().__init__("window", [self.SE, self.SD, self.ID, self.IE], True, QColor)
+        self.desloc = np.array([[1,0,0],[0,1,0],[-self.center_point[0],-self.center_point[1],1]])
+        self.rot = np.array([[cos(radians(self.angle)), -sin(radians(self.angle)), 0], [sin(radians(self.angle)), cos(radians(self.angle)), 0], [0,0,1]])
+        self.stret = np.array([[2/(self.width),0,0],[0,2/(self.heigth),0],[0,0,1]])    
+    
+    def to_window_coords(self, points: list):
+        points = list(map(lambda p: np.array((*p, 1)), points))
+        matrix = np.matmul(self.desloc, self.rot)
+        matrix = np.matmul(matrix, self.stret)
+        new_points = list(map(lambda vec: vec.dot(matrix), points))
+        new_points = list(map(lambda p: (p[0], p[1]), new_points))
+        return new_points
+
+    def stretch(self, x_factor: int, y_factor: int, center: tuple[int] = (None, None)):
+        super().stretch(x_factor, y_factor, center)
+        self.width *= x_factor
+        self.heigth *= y_factor
+        self.stret = np.array([[2/(self.width),0,0],[0,2/(self.heigth),0],[0,0,1]])
+    
+    def rotate(self, angle: float, center: tuple[int] = (None, None)):
+        super().rotate(angle, center)
+        self.angle += angle
+        self.rot = np.array([[cos(radians(self.angle)), -sin(radians(self.angle)), 0], [sin(radians(self.angle)), cos(radians(self.angle)), 0], [0,0,1]])
+    
+    def transform(self, transform_list: list):
+        super().transform(transform_list)
+        self.desloc = np.array([[1,0,0],[0,1,0],[-self.center_point[0],-self.center_point[1],1]])
+        
+    

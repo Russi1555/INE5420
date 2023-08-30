@@ -15,7 +15,7 @@ Transformando objetos:
 Selecione um ou mais objeto na lista (eles ficarão em negrito ou grossos)
 Insira a quantia de transformacao em na transformacao desejada:
     Translacao (Setas): Unidades de deslocamento no mundo
-    Escala (Quadrados): Proporção do aumento ou redução do objeto
+    Escala (Quadrados): Proporção do aumento ou redução do objeto (Para um efeito de zoom centre o ponto central em algum lugar e tranforme todos os objetos)
     Rotação (Seta circular): Angulo em graus da rotação no sentido horario.
     
     Opcional: Ponto central da transformação.

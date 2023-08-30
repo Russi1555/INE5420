@@ -1,10 +1,11 @@
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QCheckBox
 from PyQt5.QtCore import Qt
-from wireframe import wireframe
+from wireframe import Wireframe, ViewWindow
 import re
 import sys
 from collections.abc import Callable
+from random import randint
 
 class WindowInput(QMainWindow):    
     '''
@@ -35,7 +36,7 @@ class WindowInput(QMainWindow):
         plain_text("Nome", (20, 30, 71, 16))
         plain_text("Coordenadas", (20, 60, 71, 16))
         plain_text("obs: Coordenadas em formato (x1,y1) (x2,y2)...", (20, 80, 300, 16))
-        plain_text("Cor:  R:           G:           B:", (20,100,200,16))
+        plain_text("Cor:  R:           G:             B:", (20,100,200,16))
 
         # Leitores da cor
         self.r = QtWidgets.QLineEdit(self.centralwidget)
@@ -79,7 +80,6 @@ class WindowInput(QMainWindow):
         '''
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
-        # print (self.nome.text(), self.coords.text(), self.close_polygon.checkState())
         self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()]))
         self.close()
 
@@ -113,13 +113,18 @@ class MainWindow(QMainWindow):
         self.window_width = 1200
         self.window_height = 800
         self.setGeometry(self.top, self.left, self.window_width, self.window_height)
+
+        # transformacoes da window
+        self.viewer_window = ViewWindow(200,200,200,200)
+        self.transforming_window = True
+        self.world_view = False
         
-        #transformation quantities
+        # transformation quantities
         self.tqt: float = 0 #translation
         self.sqt: float = 0 #stretch
         self.rqt: float = 0 #rotation
 
-        #center point for rotation
+        # center point for rotation
         self.center_x = None
         self.center_y = None
         
@@ -133,128 +138,135 @@ class MainWindow(QMainWindow):
         """
         Getter do ponto central
         """
-        return (None if self.center_x.text() == "" else float(self.center_x.text()), None if self.center_y.text() == "" else float(self.center_y.text()))
-
-    def New_button(self, label: str, x: int, y: int, w: int, h: int, func: Callable, args: list or None = None) -> QPushButton:
-        """
-        Cria um novo botao
-
-        Args:
-            label (str): Nome.
-            x (int): coordenada x.
-            y (int): coordenada y.
-            w (int): largura.
-            h (int): altura.
-            func (Callable): funcao associada ao botao.
-            args (listorNone, optional): argumentos da funcao.
-
-        Returns:
-            QPushButton: The button created
-        """
-        
-        # Caso o dev seja bobo e coloque (10) como argumento
-        if args:
-            try:
-                iter(args)
-            except TypeError:
-                args = (args,)
-        
-        botao = QPushButton(label, self)
-        botao.setGeometry(x, y, w, h) 
-        botao.setStyleSheet("background-color: white")
-        if args: botao.clicked.connect(lambda: func(*args))
-        else: botao.clicked.connect(lambda: func())
+        try:
+            return (float(self.center_x.text()), float(self.center_y.text()))
+        except ValueError:
+            return (None, None)
     
     def UiComponents(self):
         """
         Inicia os componentes padroes da janela principal.
         """
+        def novo_botao():
+            self.janela = WindowInput()
+            self.janela.submitClicked.connect(self.instanciarNovoObjeto) #Quando recebe o sinal submitClicked, passa a mensagem como parametro para InstanciarNovoObjeto
+            self.janela.show()
+
+        def button(label: str, x: int, y: int, w: int, h: int, func: Callable, args: list or None = None) -> QPushButton:
+            """
+            Cria um novo botao
+
+            Args:
+                label (str): Nome.
+                x (int): coordenada x.
+                y (int): coordenada y.
+                w (int): largura.
+                h (int): altura.
+                func (Callable): funcao associada ao botao.
+                args (listorNone, optional): argumentos da funcao.
+
+            Returns:
+                QPushButton: The button created
+            """
+            
+            # Caso o dev seja bobo e coloque (10) como argumento
+            if args:
+                try:
+                    iter(args)
+                except TypeError:
+                    args = (args,)
+            
+            botao = QPushButton(label, self)
+            botao.setGeometry(x, y, w, h) 
+            botao.setStyleSheet("background-color: white")
+            if args: botao.clicked.connect(lambda: func(*args))
+            else: botao.clicked.connect(lambda: func())
+
+        def line_edit(x: int, y: int, w: int, h: int, text: str = None, text_width: int = None):
+            if not text is None:
+                label = QtWidgets.QLabel(self)
+                label.setGeometry(int(x-text_width), y+5, int(text_width), 20)
+                label.setText(f"{text}: ")
+            le = QtWidgets.QLineEdit(self)
+            le.setGeometry(x, y, w,h)
+            le.setStyleSheet("QLineEdit""{""border: 1px solid;""border-color: black""}")
+            return le
+
+        def check_box(x: int, y: int, w: int, h: int, text: str = None, text_width: int = None):
+            if not text is None:
+                label = QtWidgets.QLabel(self)
+                label.setGeometry(int(x-text_width), y-5, int(text_width), 20)
+                label.setText(f"{text}: ")
+            
+            check_box = QCheckBox(self)
+            check_box.setGeometry(x,y,w,h)
+            return check_box
+
         self.viewport = QtWidgets.QLabel()
         self.viewport.setGeometry(QtCore.QRect(200,10,990,600))
-
-        # Cria o botar que gera novos objetos
-        def novo_objeto():
-            """
-            Funcao de leitura do botao de novo objeto.
-            Invoca a janela de input.
-            """
-            self.WindowInput()
 
         self.lista_objetos = ListWidget(self)
         self.lista_objetos.setGeometry(10,55,180,200)
         x = self.lista_objetos.itemClicked.connect(self.lista_objetos.clicked)
-        # Botao de novo objeto
-        self.New_button("Novo Objeto", 50,20,100,30, novo_objeto)
-
-        # Botoes direcionais
-        atx,aty = 45,300
-        self.tqt = QtWidgets.QLineEdit(self) #quantidade pra mexer
-        self.tqt.setGeometry(atx + 100, aty + 15, 30,30)
-        self.tqt.setStyleSheet("QLineEdit""{""border: 1px solid;""border-color: black""}")
         
-        self.New_button("↑", atx+30,aty,30,30, self.translacao, ("cim",))
-        self.New_button("←", atx,aty+15,30,30, self.translacao, ("esq",))
-        self.New_button("→", atx+60,aty+15,30,30, self.translacao, ("dir",))
-        self.New_button("↓", atx+30,aty+30,30,30, self.translacao, ("bax",))
+        # Botao de novo objeto
+        button("Novo Objeto", 50,20,100,30, novo_botao)
+        
+        # Ancoras dos botoes
+        atx,aty = 45,280
+        
+        # Botoes direcionais
+        self.tqt = line_edit(atx + 100, aty + 15, 30,30)
+        button("↑", atx+30,aty,30,30, self.translacao, ("cim",))
+        button("←", atx,aty+15,30,30, self.translacao, ("esq",))
+        button("→", atx+60,aty+15,30,30, self.translacao, ("dir",))
+        button("↓", atx+30,aty+30,30,30, self.translacao, ("bax",))
 
         # Botao de estica e encolhe
-        self.sqt = QtWidgets.QLineEdit(self)
-        self.sqt.setGeometry(atx + 100, aty + 75, 30,30)
-        self.sqt.setStyleSheet("QLineEdit""{""border: 1px solid;""border-color: black""}")
-        self.New_button("□", atx+10,aty+75,30,30, self.estica, (1))
-        self.New_button("▫", atx+50,aty+75,30,30, self.estica, (-1))
+        self.sqt = line_edit(atx + 100, aty + 75, 30,30)
+        button("□", atx+10,aty+75,30,30, self.estica, (1))
+        button("▫", atx+50,aty+75,30,30, self.estica, (-1))
 
         # Botao de giro
-        self.rqt = QtWidgets.QLineEdit(self)
-        self.rqt.setGeometry(atx + 100, aty + 120, 30,30)
-        self.rqt.setStyleSheet("QLineEdit""{""border: 1px solid;""border-color: black""}")
-        self.New_button("↻", atx+30,aty+120,30,30, self.girar, ())
+        self.rqt = line_edit(atx + 100, aty + 120, 30, 30)
+        button("↻", atx+30,aty+120,30,30, self.girar, ())
 
         # Centro de transformação
-        label_center_x = QtWidgets.QLabel(self)
-        label_center_x.setGeometry(atx - 15, aty +185, 15, 10)
-        label_center_x.setText("X: ")
-        self.center_x = QtWidgets.QLineEdit(self)
-        self.center_x.setGeometry(atx, aty + 175, 30,30)
-        self.center_x.setStyleSheet("QLineEdit""{""border: 1px solid;""border-color: black""}")
+        self.center_x = line_edit(atx, aty + 175, 30, 30, "X", 15)
+        self.center_y = line_edit(atx + 60, aty + 175, 30, 30, "Y", 15)
+        self.render_center_point = check_box(atx + 105, aty + 225, 15, 15, "Mostrar Ponto Central", 142)
 
-        label_center_y = QtWidgets.QLabel(self)
-        label_center_y.setGeometry(atx +45, aty +185, 15, 10)
-        label_center_y.setText("Y: ")
-        self.center_y = QtWidgets.QLineEdit(self)
-        self.center_y.setGeometry(atx + 60, aty + 175, 30,30)
-        self.center_y.setStyleSheet("QLineEdit""{""border: 1px solid;""border-color: black""}")
+        # Checkbox de visao de mundo
+        self.world_view_check_box = check_box(atx + 105, aty + 250, 15,15, "Visao de Mundo", 105)
+        
+        # Checkbox de transformacoes em objetos
+        self.transform_object_check_box = check_box(atx + 105, aty + 275, 15,15, "Transformar Objetos", 134)
+        
 
-        self.render_center_point = QCheckBox(self)
-        self.render_center_point.setGeometry(atx + 105, aty + 180, 15,15)
- 
-    def WindowInput(self):
-        self.w = WindowInput()
-        self.w.submitClicked.connect(self.instanciarNovoObjeto) #Quando recebe o sinal submitClicked, passa a mensagem como parametro para InstanciarNovoObjeto
-        self.w.show()
+        self.objetos["tri"]: Wireframe = Wireframe("tri",[(250,250),(350,350),(350,250)], True, QtGui.QColor(255,0,0))
+        self.objetos["tri"].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
+        self.objetos["tri"].update_window(self.viewer_window)
+
+        self.update()
 
     def instanciarNovoObjeto(self, pacote_n_c):
-        nome = pacote_n_c[0]
-        coords =  pacote_n_c[1]
-        close = pacote_n_c[2]
-        cor = pacote_n_c[3]
+        nome, coords, close, cor = pacote_n_c
         self.lista_objetos.addItem(str(nome))
         if cor[0]==cor[1]==cor[2] and cor[0]=="":
             cor = QtGui.QColor(255,0,0)
         else:
-            for x in range(len(cor)):
-                if cor[x] == "":
-                    cor[x] = 0
-            cor = list(map(int,cor))
+            cor = list(map(lambda e: 0 if e == "" else int(e), cor))
             cor = QtGui.QColor(cor[0],cor[1],cor[2])
 
         if nome =="" or coords == "":
             print("VALORES INVALIDOS")
         else:
-            coords = [(int(x), int(y)) for x, y in re.findall(r'\((\d+),(\d+)\)', coords)]
-                
-            self.objetos[nome]: wireframe = wireframe(nome,coords, close,cor)
+            print(re.findall(r'\((\d+),(\d+)\)', coords))
+            coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
+            
+            self.objetos[nome]: Wireframe = Wireframe(nome,coords, close,cor)
             self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
+            self.objetos[nome].update_window(self.viewer_window)
             self.update()
             
     def translacao(self, dir: str):
@@ -268,9 +280,12 @@ class MainWindow(QMainWindow):
 
         args = (tqt if dir == "dir" else -tqt if dir == "esq" else 0, tqt if dir == "bax" else -tqt if dir == "cim" else 0)
 
-        for objeto in self.objetos.values():
-            if not objeto.selecionado: continue
-            objeto.translade(*args)
+        if self.transforming_window:
+            self.viewer_window.translade(*args)
+        else:
+            for objeto in self.objetos.values():
+                if not objeto.selecionado: continue
+                objeto.translade(*args)
         self.update()
 
     def estica(self, tipo: int):
@@ -282,9 +297,13 @@ class MainWindow(QMainWindow):
             center (tuple): Centro da transformacao.
         """
         value = 1 if self.sqt.text() == '' else float(self.sqt.text()) ** tipo
-        for objeto in self.objetos.values():
-            if not objeto.selecionado: continue
-            objeto.stretch(value, value, self.center_point)
+        if self.transforming_window:
+            print(value)
+            self.viewer_window.stretch(value, value)
+        else:
+            for objeto in self.objetos.values():
+                if not objeto.selecionado: continue
+                objeto.stretch(value, value)
         self.update()
     
     def girar(self):
@@ -296,9 +315,12 @@ class MainWindow(QMainWindow):
             center(tuple): Ponto Cental da rotacao.
         """
         angle = 0 if self.rqt.text() == '' else -float(self.rqt.text())
-        for objeto in self.objetos.values():
-            if not objeto.selecionado: continue
-            objeto.rotate(angle, self.center_point)
+        if self.transforming_window:
+            self.viewer_window.rotate(angle)
+        else:
+            for objeto in self.objetos.values():
+                if not objeto.selecionado: continue
+                objeto.rotate(angle, self.center_point)
         self.update()
 
     def paintEvent(self, event):
@@ -310,15 +332,22 @@ class MainWindow(QMainWindow):
         qp.setBrush(QtGui.QBrush(Qt.white, Qt.SolidPattern))
         qp.drawRect(self.viewport.x(),self.viewport.y(),self.viewport.width(),self.viewport.height())
         
+        self.world_view = int(self.world_view_check_box.checkState()) == 2
+        self.transforming_window = int(self.transform_object_check_box.checkState()) == 0
+        
         # Renderiza o centro de transformacoes caso ele exista e esteja selecionado
         if int(self.render_center_point.checkState()) == 2 and None not in self.center_point:
             qp.setPen(QtGui.QPen(Qt.black, 4))
-            cx, cy = self.center_point[0], self.center_point[1]
-            center_in_view = (self.viewport.x() + (cx  * (self.viewport.width()/self.window_width)), self.viewport.y() + (cy  * (self.viewport.height()/self.window_height)))
+            if self.world_view:
+                cx, cy = self.center_point
+                center_in_view = (self.viewport.x() + (cx  * (self.viewport.width()/self.window_width)), self.viewport.y() + (cy  * (self.viewport.height()/self.window_height)))
+            else:
+                cx, cy = self.viewer_window.to_window_coords([self.center_point])[0]
+                center_in_view = (self.viewport.x() + ((cx)  * (self.viewport.width()/2)), self.viewport.y() + ((cy)  * (self.viewport.height()/2)))
             qp.drawPoint(QtCore.QPointF(*center_in_view))
             self.update()
 
-        # Itera sobre os wireframes renderizando-os
+        # Itera sobre os Wireframes renderizando-os
         for nome, objeto in self.objetos.items():
             if self.objetos[nome].selecionado:
                 qp.setPen(QtGui.QPen(self.objetos[nome].color,4))
@@ -328,7 +357,24 @@ class MainWindow(QMainWindow):
             last_point_sees_next = False
 
             # Desenha as linhas do objeto
-            for i, (point, sees_next) in enumerate(objeto.points):
+            for i, (point, sees_next) in enumerate(objeto.points(self.world_view)):
+                if not i:
+                    last_point = point
+                    last_point_sees_next = sees_next
+                    continue
+                if last_point_sees_next: qp.drawLine(last_point, point)
+                last_point = point
+                last_point_sees_next = sees_next
+        
+        # Desenha a window caso nao estejamos renderizando o mundo de sua perspectiva
+        if self.world_view:
+            qp.setPen(QtGui.QPen(Qt.black,2))
+            last_point = None
+            last_point_sees_next = False
+            self.viewer_window.update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
+
+            # Desenha as linhas do objeto
+            for i, (point, sees_next) in enumerate(self.viewer_window.points(True)):
                 if not i:
                     last_point = point
                     last_point_sees_next = sees_next
