@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(self.top, self.left, self.window_width, self.window_height)
 
         # transformacoes da window
-        self.viewer_window = ViewWindow(200,200,200,200)
+        self.viewer_window = ViewWindow(200,200,330,200)
         
         # transformation quantities
         self.tqt: float = 0 #translation
@@ -209,7 +209,6 @@ class MainWindow(QMainWindow):
         """
         value = 1 if self.sqt.text() == '' else float(self.sqt.text()) ** tipo
         if int(self.transform_object_check_box.checkState()) == 0:
-            print(value)
             self.viewer_window.stretch(value, value)
         else:
             for objeto in self.objetos.values():
