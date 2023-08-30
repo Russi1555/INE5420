@@ -118,6 +118,7 @@ class MainWindow(QMainWindow):
         self.viewer_window = ViewWindow(200,200,200,200)
         self.transforming_window = True
         self.world_view = False
+        self.render_center_point = False
         
         # transformation quantities
         self.tqt: float = 0 #translation
@@ -200,6 +201,7 @@ class MainWindow(QMainWindow):
             
             check_box = QCheckBox(self)
             check_box.setGeometry(x,y,w,h)
+            check_box.stateChanged.connect(self.update)
             return check_box
 
         self.viewport = QtWidgets.QLabel()
@@ -339,11 +341,10 @@ class MainWindow(QMainWindow):
         if int(self.render_center_point.checkState()) == 2 and None not in self.center_point:
             qp.setPen(QtGui.QPen(Qt.black, 4))
             if self.world_view:
-                cx, cy = self.center_point
-                center_in_view = (self.viewport.x() + (cx  * (self.viewport.width()/self.window_width)), self.viewport.y() + (cy  * (self.viewport.height()/self.window_height)))
+                center_in_view = (self.viewport.x() + self.center_point[0], self.viewport.y() + self.center_point[1])
             else:
                 cx, cy = self.viewer_window.to_window_coords([self.center_point])[0]
-                center_in_view = (self.viewport.x() + ((cx)  * (self.viewport.width()/2)), self.viewport.y() + ((cy)  * (self.viewport.height()/2)))
+                center_in_view = (self.viewport.x() + ((cx+1)*self.viewport.width()/2), self.viewport.y() + (cy+1)*(self.viewport.height()/2))
             qp.drawPoint(QtCore.QPointF(*center_in_view))
             self.update()
 

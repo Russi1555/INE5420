@@ -97,8 +97,9 @@ class Wireframe:
         # self.outersec_points = []
 
         if world_view:
+            # Visao geral
             for (x, y) in self.coord_world:
-                self.coord_view.append((self.xvw + (x  * (self.widthvw/self.widthwin)), self.yvw + (y  * (self.heigthvw/self.heigthwin))))
+                self.coord_view.append((self.xvw + x, self.yvw + y))
 
         else:
             # Muda as coordenadas para viewport
