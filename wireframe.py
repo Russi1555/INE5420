@@ -240,7 +240,8 @@ class Wireframe:
             vector = vector.dot(matrix)
             self.coord_world[i] = (vector[0], vector[1])
 
-        self.center_point: tuple = np.array([sum(map(lambda e: e[0], self.coord_world))/len(self.coord_world), sum(map(lambda e: e[1], self.coord_world))/len(self.coord_world)])
+        coords = self.coord_world if not self.closed else self.coord_world[:-1]
+        self.center_point: tuple = np.array([sum(map(lambda e: e[0], coords))/len(coords), sum(map(lambda e: e[1], coords))/len(coords)])
     
     def point_in_viewport(self, point: tuple[int]):
         return self.xvw <= point[0] <= self.xvw+self.widthvw and self.yvw <= point[1] <= self.yvw+self.heigthvw
@@ -267,6 +268,9 @@ class ViewWindow(Wireframe):
         new_points = list(map(lambda p: (p[0], p[1]), new_points))
         return new_points
 
+    def translade(self, x_increment: int, y_increment: int):
+        super().translade(x_increment, y_increment)
+    
     def stretch(self, x_factor: int, y_factor: int, center: tuple[int] = (None, None)):
         super().stretch(x_factor, y_factor, center)
         self.width *= x_factor
