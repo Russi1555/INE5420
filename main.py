@@ -5,96 +5,7 @@ from wireframe import Wireframe, ViewWindow
 import re
 import sys
 from collections.abc import Callable
-from random import randint
-
-class WindowInput(QMainWindow):    
-    '''
-    Janela secundário para input do novo objeto renderizavel
-    '''
-    submitClicked = QtCore.pyqtSignal(tuple) #Sinal para transferência de dados entre janelas do PyQt
-    def __init__(self, parent = None):
-        super().__init__(parent)
-        self.nome = ""
-        self.coords = ""
-        self.setupUi(self)
-        self.pushButton.clicked.connect(self.PrintInput)
-
-    def setupUi(self, MainWindow):
-        
-        def plain_text(text: str, dim: tuple):
-            widget = QtWidgets.QLabel(self.centralwidget)
-            widget.setGeometry(QtCore.QRect(*dim))
-            widget.setObjectName(text)
-            widget.setText(text)
-
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(300, 200)
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
-
-        # Texto puro da janela
-        plain_text("Nome", (20, 30, 71, 16))
-        plain_text("Coordenadas", (20, 60, 71, 16))
-        plain_text("obs: Coordenadas em formato (x1,y1) (x2,y2)...", (20, 80, 300, 16))
-        plain_text("Cor:  R:           G:             B:", (20,100,200,16))
-
-        # Leitores da cor
-        self.r = QtWidgets.QLineEdit(self.centralwidget)
-        self.r.setGeometry(QtCore.QRect(66,100,30,16))
-        self.r.setObjectName("R")
-
-        self.g = QtWidgets.QLineEdit(self.centralwidget)
-        self.g.setGeometry(QtCore.QRect(126,100,30,16))
-        self.g.setObjectName("G")
-
-        self.b = QtWidgets.QLineEdit(self.centralwidget)
-        self.b.setGeometry(QtCore.QRect(186,100,30,16))
-        self.b.setObjectName("B")
-
-        # Botao de criar objeto
-        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(20, 130, 251, 23))
-        self.pushButton.setObjectName("pushButton")
-        self.pushButton.setText("Criar")
-
-        # Leitor do nome
-        self.nome = QtWidgets.QLineEdit(self.centralwidget)
-        self.nome.setGeometry(QtCore.QRect(100, 30, 171, 20))
-        self.nome.setObjectName("Nome")
-
-        # Leitor das coordenadas
-        self.coords = QtWidgets.QLineEdit(self.centralwidget)
-        self.coords.setGeometry(QtCore.QRect(100, 60, 171, 20))
-        self.coords.setObjectName("Coordenadas")       
-
-        # Checbox de check poligon
-        self.close_polygon = QCheckBox(self.centralwidget)
-        self.close_polygon.setGeometry(275, 63, 15, 15)
-
-        # Dados sobre a Janela
-        MainWindow.setCentralWidget(self.centralwidget)
-        MainWindow.setWindowTitle("Novo Objeto")
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
-    def PrintInput(self):
-        '''
-        emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
-        '''
-        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()]))
-        self.close()
-
-class ListWidget(QtWidgets.QListWidget, QMainWindow):
-    """
-    Widget especializado para a listagem de objetos no canvas.
-    Responsavel por determinar que objetos estao selecionados.
-    """
-    def __init__(self, mainwindow):
-        super().__init__(mainwindow)
-        self.mainwindow = mainwindow
-
-    def clicked(self, item):
-        self.mainwindow.objetos[str(item.text())].selecionado = not self.mainwindow.objetos[str(item.text())].selecionado
-        self.mainwindow.update()
+from widgets import ListWidget, WindowInput
 
 class MainWindow(QMainWindow):
     """
@@ -116,9 +27,6 @@ class MainWindow(QMainWindow):
 
         # transformacoes da window
         self.viewer_window = ViewWindow(200,200,200,200)
-        self.transforming_window = True
-        self.world_view = False
-        self.render_center_point = False
         
         # transformation quantities
         self.tqt: float = 0 #translation
@@ -204,12 +112,14 @@ class MainWindow(QMainWindow):
             check_box.stateChanged.connect(self.update)
             return check_box
 
+        # Gera o objeto viewport
         self.viewport = QtWidgets.QLabel()
         self.viewport.setGeometry(QtCore.QRect(200,10,990,600))
+        self.viewer_window.update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
 
         self.lista_objetos = ListWidget(self)
         self.lista_objetos.setGeometry(10,55,180,200)
-        x = self.lista_objetos.itemClicked.connect(self.lista_objetos.clicked)
+        self.lista_objetos.itemClicked.connect(self.lista_objetos.clicked)
         
         # Botao de novo objeto
         button("Novo Objeto", 50,20,100,30, novo_botao)
@@ -243,10 +153,10 @@ class MainWindow(QMainWindow):
         
         # Checkbox de transformacoes em objetos
         self.transform_object_check_box = check_box(atx + 105, aty + 275, 15,15, "Transformar Objetos", 134)
-        
 
+        self.lista_objetos.addItem(str("tri"))
         self.objetos["tri"]: Wireframe = Wireframe("tri",[(250,250),(350,350),(350,250)], True, QtGui.QColor(255,0,0))
-        self.objetos["tri"].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
+        self.objetos["tri"].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
         self.objetos["tri"].update_window(self.viewer_window)
 
         self.update()
@@ -263,11 +173,10 @@ class MainWindow(QMainWindow):
         if nome =="" or coords == "":
             print("VALORES INVALIDOS")
         else:
-            print(re.findall(r'\((\d+),(\d+)\)', coords))
             coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
             
             self.objetos[nome]: Wireframe = Wireframe(nome,coords, close,cor)
-            self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
+            self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
             self.objetos[nome].update_window(self.viewer_window)
             self.update()
             
@@ -282,7 +191,7 @@ class MainWindow(QMainWindow):
 
         args = (tqt if dir == "dir" else -tqt if dir == "esq" else 0, tqt if dir == "bax" else -tqt if dir == "cim" else 0)
 
-        if self.transforming_window:
+        if int(self.transform_object_check_box.checkState()) == 0:
             self.viewer_window.translade(*args)
         else:
             for objeto in self.objetos.values():
@@ -299,7 +208,7 @@ class MainWindow(QMainWindow):
             center (tuple): Centro da transformacao.
         """
         value = 1 if self.sqt.text() == '' else float(self.sqt.text()) ** tipo
-        if self.transforming_window:
+        if int(self.transform_object_check_box.checkState()) == 0:
             print(value)
             self.viewer_window.stretch(value, value)
         else:
@@ -317,7 +226,7 @@ class MainWindow(QMainWindow):
             center(tuple): Ponto Cental da rotacao.
         """
         angle = 0 if self.rqt.text() == '' else -float(self.rqt.text())
-        if self.transforming_window:
+        if int(self.transform_object_check_box.checkState()) == 0:
             self.viewer_window.rotate(angle)
         else:
             for objeto in self.objetos.values():
@@ -326,21 +235,25 @@ class MainWindow(QMainWindow):
         self.update()
 
     def paintEvent(self, event):
+        """
+        Responsavel por renderizar os wireframes
+        """
         qp = QtGui.QPainter()
         qp.begin(self)
 
-        # Desenha o retangulo preto da viewport
+        # Desenha o retangulo preto da viewport (Note que a viewport nao eh um objeto Canvas)
         qp.setPen(QtGui.QPen(Qt.black, 1))
         qp.setBrush(QtGui.QBrush(Qt.white, Qt.SolidPattern))
         qp.drawRect(self.viewport.x(),self.viewport.y(),self.viewport.width(),self.viewport.height())
         
-        self.world_view = int(self.world_view_check_box.checkState()) == 2
-        self.transforming_window = int(self.transform_object_check_box.checkState()) == 0
+        # Le as checkbox da interface
+        show_cp: bool = int(self.render_center_point.checkState()) == 2
+        world_view: bool = int(self.world_view_check_box.checkState()) == 2
         
-        # Renderiza o centro de transformacoes caso ele exista e esteja selecionado
-        if int(self.render_center_point.checkState()) == 2 and None not in self.center_point:
+        # Renderiza o centro de transformacoes quando necessario
+        if show_cp and None not in self.center_point:
             qp.setPen(QtGui.QPen(Qt.black, 4))
-            if self.world_view:
+            if world_view:
                 center_in_view = (self.viewport.x() + self.center_point[0], self.viewport.y() + self.center_point[1])
             else:
                 cx, cy = self.viewer_window.to_window_coords([self.center_point])[0]
@@ -348,9 +261,15 @@ class MainWindow(QMainWindow):
             qp.drawPoint(QtCore.QPointF(*center_in_view))
             self.update()
 
+        # Inclui a window como um objeto a ser renderizado caso nao estejamos vendo o mundo de sua perspectiva
+        objetos = {} if not world_view else {"window": self.viewer_window}
+        objetos.update(self.objetos)
+        
         # Itera sobre os Wireframes renderizando-os
-        for nome, objeto in self.objetos.items():
-            if self.objetos[nome].selecionado:
+        for nome, objeto in objetos.items():
+            if nome == "window":
+                qp.setPen(QtGui.QPen(Qt.black,2))
+            elif self.objetos[nome].selecionado:
                 qp.setPen(QtGui.QPen(self.objetos[nome].color,4))
             else:
                 qp.setPen(QtGui.QPen(self.objetos[nome].color,1))
@@ -358,24 +277,7 @@ class MainWindow(QMainWindow):
             last_point_sees_next = False
 
             # Desenha as linhas do objeto
-            for i, (point, sees_next) in enumerate(objeto.points(self.world_view)):
-                if not i:
-                    last_point = point
-                    last_point_sees_next = sees_next
-                    continue
-                if last_point_sees_next: qp.drawLine(last_point, point)
-                last_point = point
-                last_point_sees_next = sees_next
-        
-        # Desenha a window caso nao estejamos renderizando o mundo de sua perspectiva
-        if self.world_view:
-            qp.setPen(QtGui.QPen(Qt.black,2))
-            last_point = None
-            last_point_sees_next = False
-            self.viewer_window.update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height(), self.window_width, self.window_height)
-
-            # Desenha as linhas do objeto
-            for i, (point, sees_next) in enumerate(self.viewer_window.points(True)):
+            for i, (point, sees_next) in enumerate(objeto.points(world_view)):
                 if not i:
                     last_point = point
                     last_point_sees_next = sees_next

@@ -77,8 +77,6 @@ class Wireframe:
         self.yvw: int = None
         self.widthvw: int = None
         self.heigthvw: int = None
-        self.widthwin: int = None
-        self.heigthwin: int = None
         self.selecionado: bool = False
         self.color: QColor = color #Vermelho como valor padrão
     
@@ -198,7 +196,7 @@ class Wireframe:
         matrix = np.array([[cos(radians(angle)), -sin(radians(angle)), 0], [sin(radians(angle)), cos(radians(angle)), 0], [0,0,1]])
         self.transform([self.center_transformation(matrix, center=center)])
 
-    def update_viewport(self, xvw: int, yvw: int, widthvw: int, heigthvw: int, widthwin: int, heigthwin: int) -> None:
+    def update_viewport(self, xvw: int, yvw: int, widthvw: int, heigthvw: int) -> None:
         """
         Atualiza as informacao da viewport para qual o objeto será renderizado.
 
@@ -207,15 +205,11 @@ class Wireframe:
             yvw (int): coordenada y da viewport.
             widthvw (int): largura da viewport.
             heigthvw (int): altura da viewport.
-            widthwin (int): largura da janela.
-            heigthwin (int): altura da janela.
         """
         self.xvw: int = xvw
         self.yvw: int = yvw
         self.widthvw: int = widthvw
         self.heigthvw: int = heigthvw
-        self.widthwin: int = widthwin
-        self.heigthwin: int = heigthwin
 
     def update_window(self, window):
         self.window = window
@@ -285,5 +279,8 @@ class ViewWindow(Wireframe):
     def transform(self, transform_list: list):
         super().transform(transform_list)
         self.desloc = np.array([[1,0,0],[0,1,0],[-self.center_point[0],-self.center_point[1],1]])
+
+    def points(self, _):
+        return super().points(True)
         
     
