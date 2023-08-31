@@ -9,7 +9,7 @@
 	
 		make
 
-<li><strong>Criando um novo objeto:</strong>strong></li>
+<li><strong>Criando um novo objeto:</strong></li>
 
  1. Clique em "Novo objeto" no canto superior esquerdo da tela
  2. Insira seu nome
