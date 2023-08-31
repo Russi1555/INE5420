@@ -273,7 +273,7 @@ class ViewWindow(Wireframe):
     
     def rotate(self, angle: float, center: tuple[int] = (None, None)):
         super().rotate(angle, center)
-        self.angle += angle
+        self.angle -= angle
         self.rot = np.array([[cos(radians(self.angle)), -sin(radians(self.angle)), 0], [sin(radians(self.angle)), cos(radians(self.angle)), 0], [0,0,1]])
     
     def transform(self, transform_list: list):

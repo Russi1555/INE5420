@@ -213,7 +213,7 @@ class MainWindow(QMainWindow):
         else:
             for objeto in self.objetos.values():
                 if not objeto.selecionado: continue
-                objeto.stretch(value, value)
+                objeto.stretch(value, value, self.center_point)
         self.update()
     
     def girar(self):
