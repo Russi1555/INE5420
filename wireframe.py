@@ -5,7 +5,7 @@ Modulo com as primitivas graficas.
 from PyQt5.QtCore import QPointF
 from PyQt5.QtGui import QColor
 import numpy as np
-from math import sin, cos, radians
+from math import sin, cos, radians, pi
 
 def line_intersection(line1, line2, paint = False):
     xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
@@ -163,7 +163,7 @@ class Wireframe:
         trans = np.matmul(trans, transformation)
         return np.matmul(trans, np.array([[1,0,0],[0,1,0],[-x+self.center_point[0], -y+self.center_point[1], 1]]))
 
-    def translade(self, x_increment: int, y_increment: int):
+    def translade(self, dx: int, dy: int):
         """
         Desloca o objeto.
 
@@ -171,7 +171,11 @@ class Wireframe:
             x_increment (int): deslocamento x.
             y_increment (int): deslocamento y.
         """
-        self.transform([np.array([[1,0,0],[0,1,0],[x_increment, y_increment, 1]])])
+        
+        if not isinstance(self, ViewWindow):
+            theta = radians(self.window.angle)
+            dx, dy = dx * cos(theta) - dy * sin(theta), dy * cos(theta) + dx * sin(theta)
+        self.transform([np.array([[1,0,0],[0,1,0],[dx, dy, 1]])])
     
     def stretch(self, x_factor: int, y_factor: int, center: tuple[int] = (None, None)):
         """
@@ -262,8 +266,11 @@ class ViewWindow(Wireframe):
         new_points = list(map(lambda p: (p[0], p[1]), new_points))
         return new_points
 
-    def translade(self, x_increment: int, y_increment: int):
-        super().translade(x_increment, y_increment)
+    def translade(self, dx: int, dy: int):
+        theta = radians(self.angle)
+        ndx = dx * cos(theta) - dy * sin(theta)
+        ndy = dy * cos(theta) + dx * sin(theta)
+        super().translade(ndx, ndy)
     
     def stretch(self, x_factor: int, y_factor: int, center: tuple[int] = (None, None)):
         super().stretch(x_factor, y_factor, center)
