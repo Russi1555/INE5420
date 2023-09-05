@@ -2,6 +2,7 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QCheckBox
 from PyQt5.QtCore import Qt
 from wireframe import Wireframe, ViewWindow
+from DescritorOBJ import DescritorOBJ
 import re
 import sys
 from collections.abc import Callable
@@ -36,7 +37,8 @@ class MainWindow(QMainWindow):
         # center point for rotation
         self.center_x = None
         self.center_y = None
-        
+
+        self.descritor = DescritorOBJ()
         self.objetos = {}
         self.setStyleSheet("background-color: light grey")
         self.UiComponents()
@@ -60,6 +62,9 @@ class MainWindow(QMainWindow):
             self.janela = WindowInput()
             self.janela.submitClicked.connect(self.instanciarNovoObjeto) #Quando recebe o sinal submitClicked, passa a mensagem como parametro para InstanciarNovoObjeto
             self.janela.show()
+
+        def salvar_objetos():
+            self.descritor.save_objs(self.objetos)
 
         def button(label: str, x: int, y: int, w: int, h: int, func: Callable, args: list or None = None) -> QPushButton:
             """
@@ -124,8 +129,11 @@ class MainWindow(QMainWindow):
         # Botao de novo objeto
         button("Novo Objeto", 50,20,100,30, novo_botao)
         
+        # Bota de salvar objetos
+        button("Salvar Objetos",10,265,100,30, salvar_objetos )
+        
         # Ancoras dos botoes
-        atx,aty = 45,280
+        atx,aty = 45,320
         
         # Botoes direcionais
         self.tqt = line_edit(atx + 100, aty + 15, 30,30)
