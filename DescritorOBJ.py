@@ -36,14 +36,16 @@ class DescritorOBJ:
                 for coord in objeto.coord_world:
                     if coord not in dic_verticies:
                         dic_verticies[coord] = contador_v
-                        escrita_v += "\n" + str(contador_v) + " v "+ str(coord[0]) + " " + str(coord[1])
+                        escrita_v += "\n" + "v "+ str(coord[0]) + " " + str(coord[1]) + " " + "0"
                         contador_v += 1
                     escrita_futura_coords += str(dic_verticies[coord]) + " " #TESTAR
 
-                if objeto.closed and len(objeto.coord_world) == 3:
+                if objeto.closed:
                     escrita_futura_coords="f" + escrita_futura_coords[1:]
                 else:
                     escrita_futura_coords="l"+ escrita_futura_coords[1:]
+
+            
             
             escrita_cores = objeto.color.getRgb()
             escrita_cores = "Kd " + str(escrita_cores[0]) + " " + str(escrita_cores[1]) + " " + str(escrita_cores[2])
