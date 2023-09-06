@@ -80,10 +80,10 @@ class DescritorOBJ:
         objeto_carregando_close = False
         for linha in arquivo:
            # print(linha)
-            if linha == "":
+            info = linha.split()
+            if info == []:
                 pass
             else:
-                info = linha.split()
                 print(info)
                 identficador = info[0]
                 if identficador == 'v':
