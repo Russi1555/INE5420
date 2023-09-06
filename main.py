@@ -66,6 +66,20 @@ class MainWindow(QMainWindow):
         def salvar_objetos():
             self.descritor.save_objs(self.objetos)
 
+        def carregar_objetos():
+            self.objetos = dict()
+            self.lista_objetos.clear()
+            novos_obs = self.descritor.load_objs()
+            for key in novos_obs:
+                print(novos_obs[key])
+                obj = novos_obs[key]
+                novo_obj = Wireframe(obj[0],obj[1],obj[2],obj[3])
+                self.objetos[key] = novo_obj
+                self.objetos[key].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
+                self.objetos[key].update_window(self.viewer_window)
+                self.lista_objetos.addItem(str(key))
+            self.update()
+
         def button(label: str, x: int, y: int, w: int, h: int, func: Callable, args: list or None = None) -> QPushButton:
             """
             Cria um novo botao
@@ -131,6 +145,9 @@ class MainWindow(QMainWindow):
         
         # Bota de salvar objetos
         button("Salvar Objetos",10,265,100,30, salvar_objetos )
+
+        # Bota de carregar objetos
+        button("Carregar Objetos",110,265,100,30, carregar_objetos )
         
         # Ancoras dos botoes
         atx,aty = 45,320
