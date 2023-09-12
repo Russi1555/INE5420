@@ -57,14 +57,14 @@ class DescritorOBJ:
             fila_para_escrita.append(escrita_futura_nome)
 
             arquivo.write(escrita_v) #isso definitivamente precisa
-            print(escrita_v)
+            # print(escrita_v)
            #arquivo.write("color "+str(objeto.color.getRgb())+"\n") #precisa mas escrito diferente
         
         count_fila = contador_v
         while(fila_para_escrita):
             temp = fila_para_escrita.pop()
             arquivo.write("\n" + temp )
-            print(temp)
+            # print(temp)
             count_fila +=1
 
     
@@ -84,7 +84,7 @@ class DescritorOBJ:
             if info == []:
                 pass
             else:
-                print(info)
+                # print(info)
                 identficador = info[0]
                 if identficador == 'v':
                     dic_vetores[contador_vetores] = info[1:]
@@ -115,6 +115,6 @@ class DescritorOBJ:
 
 
         dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor]
-        print(dic_objetos)
+        # print(dic_objetos)
         return dic_objetos
 

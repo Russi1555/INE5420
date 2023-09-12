@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
             self.lista_objetos.clear()
             novos_obs = self.descritor.load_objs()
             for key in novos_obs:
-                print(novos_obs[key])
+                # print(novos_obs[key])
                 obj = novos_obs[key]
                 novo_obj = Wireframe(obj[0],obj[1],obj[2],obj[3])
                 self.objetos[key] = novo_obj
@@ -144,13 +144,13 @@ class MainWindow(QMainWindow):
         button("Novo Objeto", 50,20,100,30, novo_botao)
         
         # Bota de salvar objetos
-        button("Salvar Objetos",10,265,100,30, salvar_objetos )
+        button("Salvar Objetos",30,265,130,30, salvar_objetos )
 
         # Bota de carregar objetos
-        button("Carregar Objetos",110,265,100,30, carregar_objetos )
+        button("Carregar Objetos",30,305,130,30, carregar_objetos )
         
         # Ancoras dos botoes
-        atx,aty = 45,320
+        atx,aty = 45,350
         
         # Botoes direcionais
         self.tqt = line_edit(atx + 100, aty + 15, 30,30)
@@ -178,11 +178,6 @@ class MainWindow(QMainWindow):
         
         # Checkbox de transformacoes em objetos
         self.transform_object_check_box = check_box(atx + 105, aty + 275, 15,15, "Transformar Objetos", 134)
-
-        self.lista_objetos.addItem(str("tri"))
-        self.objetos["tri"]: Wireframe = Wireframe("tri",[(250,250),(350,350),(350,250)], True, QtGui.QColor(255,0,0))
-        self.objetos["tri"].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
-        self.objetos["tri"].update_window(self.viewer_window)
 
         self.update()
 
