@@ -69,6 +69,10 @@ class WindowInput(QMainWindow):
         self.close_polygon = QCheckBox(self.centralwidget)
         self.close_polygon.setGeometry(275, 63, 15, 15)
 
+        # Checbox de check filled
+        self.filled_polygon = QCheckBox(self.centralwidget)
+        self.filled_polygon.setGeometry(275, 100, 15, 15)
+
         # Dados sobre a Janela
         MainWindow.setCentralWidget(self.centralwidget)
         MainWindow.setWindowTitle("Novo Objeto")
@@ -78,7 +82,7 @@ class WindowInput(QMainWindow):
         '''
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
-        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()]))
+        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()],int(self.filled_polygon.checkState()) == 2))
         self.close()
 
 class ListWidget(QtWidgets.QListWidget, QMainWindow):
