@@ -292,18 +292,9 @@ class MainWindow(QMainWindow):
                 qp.setPen(QtGui.QPen(self.objetos[nome].color,4))
             else:
                 qp.setPen(QtGui.QPen(self.objetos[nome].color,1))
-            last_point = None
-            last_point_sees_next = False
-
-            # Desenha as linhas do objeto
-            for i, (point, sees_next) in enumerate(objeto.points(world_view)):
-                if not i:
-                    last_point = point
-                    last_point_sees_next = sees_next
-                    continue
-                if last_point_sees_next: qp.drawLine(last_point, point)
-                last_point = point
-                last_point_sees_next = sees_next
+            
+            for linha in objeto.lines(world_view):
+                qp.drawLine(*linha)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

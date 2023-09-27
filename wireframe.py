@@ -80,73 +80,97 @@ class Wireframe:
         self.selecionado: bool = False
         self.color: QColor = color #Vermelho como valor padrão
     
+    def window2view(self, point: tuple) -> tuple:
+        """
+        Converte os pontos da coordenada de window para viwport
+
+        Args:
+            point (tuple): ponto (x,y)
+
+        Returns:
+            tuple: ponto (x,y)
+        """
+
+        x, y = point
+
+        return (self.xvw + ((1+x)  * (self.widthvw/2)), self.yvw + ((1+y)  * (self.heigthvw/2)))
+    
     def points(self, world_view = False):
         self.render_to_view(world_view)
         return self.clipped_points
 
+    def lines(self, world_view = False):
+        """
+        Retorna as linhas do poligono
+
+        Args:
+            world_view (bool, optional): Se a renderizacao sera referente ao mundo. Defaults to False.
+        """
+
+        self.render_to_view(world_view)
+        return self.clipped_lines
+    
+    def clip_CS(self, line: list, window: list = [(-1,-1),(-1,1),(1,1),(1,-1)]):
+        """
+        Recebe uma lista de pontos e os clippa
+
+        Args:
+            points (list): Lista de pontos que formam o poligono a ser clippado
+            window (list, optional): Lista dos quatro pontos que formam a window (A clippagem eh feita)
+        """
+        wxmin, wxmax = min(map(lambda e: e[0], window)), max(map(lambda e: e[0], window))
+        wymin, wymax = min(map(lambda e: e[1], window)), max(map(lambda e: e[1], window))
+
+        enumESQ, enumDIR, enumBAX, enumCIM = 1, 2, 4, 8
+        
+        def in_window(point: tuple):
+            return wxmin <= point[0] <= wxmax and wymin <= point[1] <= wymax
+
+
+        # Gera o valor de CS para cada ponto
+        CS = {point: 0 for point in line}
+        for (x,y) in line:
+            if x < wxmin: CS[(x,y)] += enumESQ
+            elif x > wxmax: CS[(x,y)] += enumDIR
+            if y < wymin: CS[(x,y)] += enumBAX
+            elif y > wymax: CS[(x,y)] += enumCIM
+
+        # Guardas para casos triviais
+        if not CS[line[0]] and not CS[line[1]]: return line
+        elif CS[line[0]] & CS[line[1]]: return None
+        
+        def clip(point, outro):
+            if not CS[point]: return point
+            x, y = outro
+            # coef_a = (y-y0)/(x-x0)
+            (x0, y0), (x1, y1) = line
+            if x0 != x1:
+                ESQ = (wxmin, (y1-y0)/(x1-x0) * (wxmin - x) + y)
+                if CS[point] & enumESQ and in_window(ESQ): return ESQ
+                DIR = (wxmax, (y1-y0)/(x1-x0) * (wxmax - x) + y)
+                if CS[point] & enumDIR and in_window(DIR): return DIR
+            if y0 != y1:
+                BAX = (x + (x1-x0)/(y1-y0) * (wymin - y), wymin)
+                if CS[point] & enumBAX and in_window(BAX): return BAX
+                CIM = (x + (x1-x0)/(y1-y0) * (wymax - y), wymax)
+                if CS[point] & enumCIM and in_window(CIM): return CIM
+            return None
+
+        return (clip(line[0], line[1]), clip(line[1], line[0]))
+  
     def render_to_view(self, world_view = False):
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
 
-        self.coord_view = []
-        self.intersec_points = []
-        self.clipped_points = []
-        # self.outersec_points = []
-
-        if world_view:
-            # Visao geral
-            for (x, y) in self.coord_world:
-                self.coord_view.append((self.xvw + x, self.yvw + y))
-
-        else:
-            # Muda as coordenadas para viewport
-            for (x, y) in self.window.to_window_coords(self.coord_world):
-                self.coord_view.append((self.xvw + ((1+x)  * (self.widthvw/2)), self.yvw + ((1+y)  * (self.heigthvw/2))))
-
-        # Linhas que compoe a viewport
-        vpSE, vpSD, vpID, vpIE = (self.xvw,self.yvw), (self.xvw+self.widthvw,self.yvw), (self.xvw+self.widthvw,self.yvw+self.heigthvw), (self.xvw,self.yvw+self.heigthvw)
-        vplinhas = [(vpSE, vpSD), (vpSD, vpID), (vpID, vpIE), (vpIE, vpSE)]
-        
-        last_point = None
-        for i, (x, y) in enumerate(self.coord_view):
-            if not i:
-                last_point = (x,y)
-                continue
-            # Coloca o ponto da iteracao anterior como um dos pontos candidatos a renderizacao
-            linha = ((x,y),last_point)
-            self.clipped_points.append({"coord": last_point, "visible": self.point_in_viewport(last_point), "sees": None})
-            
-            my_intersec = []
-            # Determina os pontos de intersecao entre a linha e a viewport
-            for vplinha in vplinhas:
-                xi, yi = line_intersection(linha, vplinha)
-                if not xi is None:
-                    self.intersec_points.append(QPointF(xi,yi))
-                    my_intersec.append((xi,yi))
-            
-            # Coloca os pontos de intersecao na lista de candidatos a renderizacao
-            my_intersec.sort(key=lambda e: distancia_eucl(e, (x,y)))
-            for p in my_intersec:
-                self.clipped_points.append({"coord": p, "visible": True, "sees": None})
-            
-            last_point = (x,y)
-        
-        # Coloca o ultimo ponto na lista de candidatos a renderizacao
-        self.clipped_points.append({"coord": last_point, "visible": self.point_in_viewport(last_point), "sees": None})
-
-        # Determina se um ponto deve ou nao conectar no proximo (se o proximo ponto na lista eh visivel ou nao)
-        for i, point in enumerate(self.clipped_points):
-            if i == len(self.clipped_points) - 1: break
-
-            # So conecta se o proximo ponto for de fato visivel
-            self.clipped_points[i]["sees"] = self.clipped_points[i+1]["visible"]
-
-        # Filtra pontos invisiveis
-        self.clipped_points = list(filter(lambda e: e["visible"], self.clipped_points))
-
-        # Gera os pontos objeto finais
-        self.clipped_points = list(map(lambda e: (QPointF(*e["coord"]), e["sees"]), self.clipped_points))
+        clipped_points = self.window.to_window_coords(self.coord_world)
+        self.clipped_lines = []
+        for i, point in enumerate(clipped_points):
+            if i == len(clipped_points) - 1: break
+            line = self.clip_CS((point, clipped_points[i+1]))
+            if line and line[0] and line[1]: self.clipped_lines.append(line)
+        # print(self.clipped_lines)
+        self.clipped_lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), self.clipped_lines))
 
     def center_transformation(self, transformation, center: tuple[int] = (None, None)):
         """
