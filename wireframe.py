@@ -314,4 +314,7 @@ class ViewWindow(Wireframe):
     def points(self, _):
         return super().points(True)
         
+class Wireframe_filled(Wireframe):
+    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor, additional_data: str = "") -> None:
+        super().__init__(label, coord_list, closed, color)
     

@@ -1,7 +1,7 @@
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QCheckBox
 from PyQt5.QtCore import Qt
-from wireframe import Wireframe, ViewWindow
+from wireframe import Wireframe, ViewWindow, Wireframe_filled
 from DescritorOBJ import DescritorOBJ
 import re
 import sys
@@ -182,7 +182,7 @@ class MainWindow(QMainWindow):
         self.update()
 
     def instanciarNovoObjeto(self, pacote_n_c):
-        nome, coords, close, cor = pacote_n_c
+        nome, coords, close, cor, filled = pacote_n_c
         self.lista_objetos.addItem(str(nome))
         if cor[0]==cor[1]==cor[2] and cor[0]=="":
             cor = QtGui.QColor(255,0,0)
@@ -194,8 +194,12 @@ class MainWindow(QMainWindow):
             print("VALORES INVALIDOS")
         else:
             coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
-            
-            self.objetos[nome]: Wireframe = Wireframe(nome,coords, close,cor)
+        
+            if filled:
+                self.objetos[nome]: Wireframe = Wireframe_filled(nome,coords, close,cor)
+            else:
+                self.objetos[nome]: Wireframe = Wireframe(nome,coords, close,cor)
+
             self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
             self.objetos[nome].update_window(self.viewer_window)
             self.update()
