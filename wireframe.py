@@ -201,7 +201,7 @@ class Wireframe:
 
         points = self.window.to_window_coords(self.coord_world)
         # Clipa todos os pontos linearizados
-        lines = list(map(lambda line: self.clip_CS(line), self.linearize(points)))
+        lines = list(map(lambda line: self.clip_LB(line), self.linearize(points)))
         # Filtra linhas nulas
         lines = list(filter(lambda line: line is not None and line[0] is not None and line[1] is not None, lines))
         # Transforma as linhas em objetos renderizaveis

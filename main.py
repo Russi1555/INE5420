@@ -299,8 +299,9 @@ class MainWindow(QMainWindow):
             
             if type(objeto) == Wireframe_filled:
                 for poligono in objeto.poligons():
-                    for linha in poligono:
-                        qp.drawLine(*linha)
+                    qp.setBrush(QtGui.QBrush(objeto.color))
+                    pontos = [x for x,y in poligono]
+                    qp.drawPolygon(QtGui.QPolygonF(pontos))
 
             else:
                 for linha in objeto.lines(world_view):
