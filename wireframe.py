@@ -7,33 +7,6 @@ from PyQt5.QtGui import QColor
 import numpy as np
 from math import sin, cos, radians, pi
 
-def line_intersection(line1, line2, paint = False):
-    xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
-    ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
-
-    def det(a, b):
-        return a[0] * b[1] - a[1] * b[0]
-
-    div = det(xdiff, ydiff)
-    if not div: return None, None
-
-    d = (det(*line1), det(*line2))
-    x = det(d, xdiff) / div
-    y = det(d, ydiff) / div
-
-    # TODO: Descobrir a tolerancia ideal
-    tol: float = 10e-5
-
-    if not paint:
-        l1r, l1l = min(line1[0][0],line1[1][0])-tol, max(line1[0][0],line1[1][0])+tol
-        l1t, l1b = min(line1[0][1],line1[1][1])-tol, max(line1[0][1],line1[1][1])+tol
-        l2r, l2l = min(line2[0][0],line2[1][0])-tol, max(line2[0][0],line2[1][0])+tol
-        l2t, l2b = min(line2[0][1],line2[1][1])-tol, max(line2[0][1],line2[1][1])+tol
-        if not (l1r <= x <= l1l) or not (l1t <= y <= l1b) or not (l2r <= x <= l2l) or not (l2t <= y <= l2b): 
-            
-            return None, None
-    return x, y
-
 def unit_vector(vector):
     return vector / np.linalg.norm(vector)
 
@@ -50,9 +23,6 @@ def angle_between(v1, v2):
     v1_u = unit_vector(v1)
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
-
-def distancia_eucl(ponto1, ponto2):
-    return ((ponto1[0]-ponto2[0])**2 + (ponto1[1]-ponto2[1])**2) ** (1/2)
 
 class Wireframe:
     def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor) -> None:
@@ -107,8 +77,8 @@ class Wireframe:
             world_view (bool, optional): Se a renderizacao sera referente ao mundo. Defaults to False.
         """
 
-        self.render_to_view(world_view)
-        return self.clipped_lines
+        lines = self.render_to_view(world_view)
+        return lines
     
     def clip_CS(self, line: list, window: list = [(-1,-1),(-1,1),(1,1),(1,-1)]):
         """
@@ -208,18 +178,38 @@ class Wireframe:
         return ret_1, ret_2
 
 
+    def linearize(self, points: list) -> list:
+        """Dada uma lista de pontos ordenados devolve todas as linhas que os ligam
+
+        Args:
+            points (list): lista de pontos
+
+        Returns:
+            list: lista de linhas no formato ((x0,y0), (x1,y1))
+        """
+        lines: list = []
+        for i, point in enumerate(points):
+            if i == len(points) - 1: break
+            line = (point, points[i+1])
+            lines.append(line)
+        return lines
+          
     def render_to_view(self, world_view = False):
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
-        clipped_points = self.window.to_window_coords(self.coord_world)
-        self.clipped_lines = []
-        for i, point in enumerate(clipped_points):
-            if i == len(clipped_points) - 1: break
-            line = self.clip_LB((point, clipped_points[i+1]))
-            if line and line[0] and line[1]: self.clipped_lines.append(line)
-        # print(self.clipped_lines)
-        self.clipped_lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), self.clipped_lines))
+
+        points = self.window.to_window_coords(self.coord_world)
+        # Clipa todos os pontos linearizados
+        lines = list(map(lambda line: self.clip_CS(line), self.linearize(points)))
+        # Filtra linhas nulas
+        lines = list(filter(lambda line: line is not None and line[0] is not None and line[1] is not None, lines))
+        # Transforma as linhas em objetos renderizaveis
+        lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), lines))
+        
+        return lines
+
+    ######### METODOS DE TRANSFORMACAO ########
 
     def center_transformation(self, transformation, center: tuple[int] = (None, None)):
         """
@@ -273,24 +263,6 @@ class Wireframe:
         matrix = np.array([[cos(radians(angle)), -sin(radians(angle)), 0], [sin(radians(angle)), cos(radians(angle)), 0], [0,0,1]])
         self.transform([self.center_transformation(matrix, center=center)])
 
-    def update_viewport(self, xvw: int, yvw: int, widthvw: int, heigthvw: int) -> None:
-        """
-        Atualiza as informacao da viewport para qual o objeto será renderizado.
-
-        Args:
-            xvw (int): coordenada x da viewport.
-            yvw (int): coordenada y da viewport.
-            widthvw (int): largura da viewport.
-            heigthvw (int): altura da viewport.
-        """
-        self.xvw: int = xvw
-        self.yvw: int = yvw
-        self.widthvw: int = widthvw
-        self.heigthvw: int = heigthvw
-
-    def update_window(self, window):
-        self.window = window
-
     def transform(self, transform_list: list):
         """
         Transforms the objects
@@ -314,6 +286,26 @@ class Wireframe:
         coords = self.coord_world if not self.closed else self.coord_world[:-1]
         self.center_point: tuple = np.array([sum(map(lambda e: e[0], coords))/len(coords), sum(map(lambda e: e[1], coords))/len(coords)])
     
+    ########### METODOS DE UPDATE #######
+
+    def update_viewport(self, xvw: int, yvw: int, widthvw: int, heigthvw: int) -> None:
+        """
+        Atualiza as informacao da viewport para qual o objeto será renderizado.
+
+        Args:
+            xvw (int): coordenada x da viewport.
+            yvw (int): coordenada y da viewport.
+            widthvw (int): largura da viewport.
+            heigthvw (int): altura da viewport.
+        """
+        self.xvw: int = xvw
+        self.yvw: int = yvw
+        self.widthvw: int = widthvw
+        self.heigthvw: int = heigthvw
+
+    def update_window(self, window):
+        self.window = window
+
     def point_in_viewport(self, point: tuple[int]):
         return self.xvw <= point[0] <= self.xvw+self.widthvw and self.yvw <= point[1] <= self.yvw+self.heigthvw
 
@@ -366,4 +358,71 @@ class ViewWindow(Wireframe):
 class Wireframe_filled(Wireframe):
     def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor, additional_data: str = "") -> None:
         super().__init__(label, coord_list, closed, color)
+    def poligons(self):
+        return self.render_to_view()
     
+    def render_to_view(self, world_view=False):
+
+        # Lista de poligonos a serem renderizados
+        poligons: list = []
+
+        # Sabe como eh floatin point ne, ruim comparar valores diretamente, isso aqui eh cheio de conversao
+        precision = 1e-10                
+
+        # Clipa todos os pontos de acordo com Cohen Sutherland
+        points = self.window.to_window_coords(self.coord_world)
+        lines = self.linearize(points)
+        lines = list(map(lambda line: self.clip_CS(line), self.linearize(points)))
+        lines = list(filter(lambda line: line is not None and line[0] is not None and line[1] is not None, lines))
+
+        if lines == []: return [lines]
+
+        # TODO poligono completamente fora da janela
+
+        # Separa o poligonos nos poligonos menores a serem renderizados
+        this_poligon = []
+        for i, line in enumerate(lines):
+            # Ignora a primeira linha
+            if not i: continue
+            # Coloca a linha atual como parte do poligono atual
+            this_poligon.append(lines[i-1])
+            # Implica discontinuade nas linhas, houve clipagem, separaremos ambos poligonos
+            if (lines[i-1][1] != line[0]):
+                poligons.append(this_poligon)
+                this_poligon = []
+        this_poligon.append(lines[-1])
+        poligons.append(this_poligon)
+
+        # Confere se o ultimo poligono e o primeiro sao o mesmo, se sim os une
+        print("bordas: ",poligons[0][0][0], poligons[-1][-1][-1])
+        if len(poligons) > 1 and poligons[0][0][0] == poligons[-1][-1][-1]:
+            poligons[0] = poligons[-1] + poligons[0]
+            poligons.pop()
+
+        # Dada a lista de poligonos os completa com a borda
+        print("poli: ", poligons)
+        for poligon in poligons:
+            ponta_inicial, ponta_final = poligon[0][0], poligon[-1][-1]
+            x0, y0 = ponta_inicial
+            x1, y1 = ponta_final
+            # print("pontas: ", ponta_inicial, ponta_final)
+            # Nao houve clipping
+            if ponta_inicial == ponta_final: continue
+            # Dividem uma borda, basta criar uma linha que una os pontos
+            elif abs(x0-x1) < precision or abs(y0-y1) < precision:
+                # print("Borda")
+                poligon.append(((x1, y1), (x0, y0)))
+            # Nao dividem borda :'(
+            else:
+                # Descobre em quina tem que conectar
+                xq = 1 if abs(x0-1) < precision or abs(x1-1) < precision else -1
+                yq = 1 if abs(y0-1) < precision or abs(y1-1) < precision else -1
+
+                # Conecta o fim a quina e a quina ao inicio
+                poligon.append(((x1, y1), (xq, yq)))
+                poligon.append(((xq, yq), (x0, y0)))
+
+        # Transforma todos os pontos do poligono em ponto QpointF
+        poligons = list(map(lambda pol: list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), pol)), poligons))  
+
+        return poligons
