@@ -297,8 +297,14 @@ class MainWindow(QMainWindow):
             else:
                 qp.setPen(QtGui.QPen(self.objetos[nome].color,1))
             
-            for linha in objeto.lines(world_view):
-                qp.drawLine(*linha)
+            if type(objeto) == Wireframe_filled:
+                for poligono in objeto.poligons():
+                    for linha in poligono:
+                        qp.drawLine(*linha)
+
+            else:
+                for linha in objeto.lines(world_view):
+                    qp.drawLine(*linha)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
