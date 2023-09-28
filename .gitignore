@@ -1,2 +1,6 @@
 __pycache__/
+<<<<<<< HEAD
 .gitignore
+=======
+venv/
+>>>>>>> 9d3de0d493b6de3b297949f266ccaae0d03b8ed9
