@@ -68,10 +68,12 @@ class WindowInput(QMainWindow):
         # Checbox de check poligon
         self.close_polygon = QCheckBox(self.centralwidget)
         self.close_polygon.setGeometry(275, 63, 15, 15)
+        self.close_polygon.setToolTip("Marque essa caixa para fechar o poligono (ex: transformar 2 linhas em um triangulo)")
 
         # Checbox de check filled
         self.filled_polygon = QCheckBox(self.centralwidget)
         self.filled_polygon.setGeometry(275, 100, 15, 15)
+        self.filled_polygon.setToolTip("Marque essa caixa para preencher o poligono com a cor escolhida")
 
         # Dados sobre a Janela
         MainWindow.setCentralWidget(self.centralwidget)

@@ -1,5 +1,5 @@
 from PyQt5 import QtGui, QtWidgets, QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QCheckBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QCheckBox, QSlider
 from PyQt5.QtCore import Qt
 from wireframe import Wireframe, ViewWindow, Wireframe_filled
 from DescritorOBJ import DescritorOBJ
@@ -130,6 +130,14 @@ class MainWindow(QMainWindow):
             check_box.setGeometry(x,y,w,h)
             check_box.stateChanged.connect(self.update)
             return check_box
+        
+        def slider(min,max,step,x,y,width,heigth):
+            widget = QSlider(self)
+            widget.setGeometry(x,y,width,heigth)
+            widget.setMinimum(min)
+            widget.setMaximum(max)
+            widget.setSingleStep(step)
+
 
         # Gera o objeto viewport
         self.viewport = QtWidgets.QLabel()
@@ -139,6 +147,8 @@ class MainWindow(QMainWindow):
         self.lista_objetos = ListWidget(self)
         self.lista_objetos.setGeometry(10,55,180,200)
         self.lista_objetos.itemClicked.connect(self.lista_objetos.clicked)
+
+        
         
         # Botao de novo objeto
         button("Novo Objeto", 50,20,100,30, novo_botao)
@@ -178,6 +188,20 @@ class MainWindow(QMainWindow):
         
         # Checkbox de transformacoes em objetos
         self.transform_object_check_box = check_box(atx + 105, aty + 275, 15,15, "Transformar Objetos", 134)
+
+        # Slider de Clipping
+        self.slider_clip = slider(1,3,1,atx, aty + 320, 105,60)
+        self.slider_label_1 = QtWidgets.QLabel(self)
+        self.slider_label_1.setText("Clipping C")
+        self.slider_label_1.setGeometry(atx+110, aty +362, 145, 20)
+
+        self.slider_label_1 = QtWidgets.QLabel(self)
+        self.slider_label_1.setText("Clipping LB")
+        self.slider_label_1.setGeometry(atx+110, aty +338, 145, 20)
+
+        self.slider_label_1 = QtWidgets.QLabel(self)
+        self.slider_label_1.setText("No Clipping")
+        self.slider_label_1.setGeometry(atx+110, aty +315, 145, 20)
 
         self.update()
 
