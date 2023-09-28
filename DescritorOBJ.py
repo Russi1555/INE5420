@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from PyQt5 import QtGui, QtWidgets, QtCore
-from wireframe import Wireframe
+from wireframe import Wireframe, Wireframe_filled
 
 class DescritorOBJ:
     def __init__(self):
@@ -42,7 +42,7 @@ class DescritorOBJ:
                         contador_v += 1
                     escrita_futura_coords += str(dic_verticies[coord]) + " " #TESTAR
 
-                if objeto.closed:
+                if type(objeto) == Wireframe_filled:
                     escrita_futura_coords="f"+ escrita_futura_coords[1:]
                 else:
                     escrita_futura_coords="l"+ escrita_futura_coords[1:]
@@ -78,6 +78,7 @@ class DescritorOBJ:
         objeto_carregando_vetores = []
         objeto_carregando_cor = QtGui.QColor(255,0,0) #se não específicado é vermelho
         objeto_carregando_close = False
+        objeto_carregando_filled = False
         for linha in arquivo:
            # print(linha)
             info = linha.split()
@@ -91,7 +92,7 @@ class DescritorOBJ:
                     contador_vetores+=1
                 elif identficador == 'o':
                     if objeto_carregando_nome != "": #adiciona o objeto pronto ao dicionario de objetos e limpa os buffers
-                        dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor]
+                        dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor, objeto_carregando_filled]
                         objeto_carregando_nome = ""
                         objeto_carregando_vetores = []
                         objeto_carregando_close = False
@@ -110,11 +111,13 @@ class DescritorOBJ:
                         tupla = (float(dic_vetores[key][0]), float((dic_vetores[key])[1]))
                         objeto_carregando_vetores.append(tupla)
                         #print(str(tupla))
-                    if identficador == "p":
+                    if identficador == "f":
                         objeto_carregando_close = True
+                        objeto_carregando_filled = True
 
 
-        dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor]
+        dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor, objeto_carregando_filled]
         # print(dic_objetos)
+        print(dic_objetos)
         return dic_objetos
 
