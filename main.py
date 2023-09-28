@@ -135,6 +135,8 @@ class MainWindow(QMainWindow):
         self.viewport = QtWidgets.QLabel()
         self.viewport.setGeometry(QtCore.QRect(200,10,990,600))
         self.viewer_window.update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
+        self.world_viewer = ViewWindow(200,10,990,600)
+        self.world_viewer.update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
 
         self.lista_objetos = ListWidget(self)
         self.lista_objetos.setGeometry(10,55,180,200)
@@ -272,15 +274,13 @@ class MainWindow(QMainWindow):
         # Le as checkbox da interface
         show_cp: bool = int(self.render_center_point.checkState()) == 2
         world_view: bool = int(self.world_view_check_box.checkState()) == 2
+        used_window = self.world_viewer if world_view else self.viewer_window
         
         # Renderiza o centro de transformacoes quando necessario
         if show_cp and None not in self.center_point:
             qp.setPen(QtGui.QPen(Qt.black, 4))
-            if world_view:
-                center_in_view = (self.viewport.x() + self.center_point[0], self.viewport.y() + self.center_point[1])
-            else:
-                cx, cy = self.viewer_window.to_window_coords([self.center_point])[0]
-                center_in_view = (self.viewport.x() + ((cx+1)*self.viewport.width()/2), self.viewport.y() + (cy+1)*(self.viewport.height()/2))
+            cx, cy = used_window.to_window_coords([self.center_point])[0]
+            center_in_view = (self.viewport.x() + ((cx+1)*self.viewport.width()/2), self.viewport.y() + (cy+1)*(self.viewport.height()/2))
             qp.drawPoint(QtCore.QPointF(*center_in_view))
             self.update()
 
@@ -290,6 +290,7 @@ class MainWindow(QMainWindow):
         
         # Itera sobre os Wireframes renderizando-os
         for nome, objeto in objetos.items():
+            objeto.update_window(used_window)
             if nome == "window":
                 qp.setPen(QtGui.QPen(Qt.black,2))
             elif self.objetos[nome].selecionado:
@@ -298,8 +299,13 @@ class MainWindow(QMainWindow):
                 qp.setPen(QtGui.QPen(self.objetos[nome].color,1))
             
             if type(objeto) == Wireframe_filled:
-                for poligono in objeto.poligons():
-                    for linha in poligono:
+                qp.setBrush(QtGui.QBrush(objeto.color))
+                linhas = objeto.lines()
+                if linhas != [[]]:
+                    qp.drawPolygon(QtGui.QPolygonF(list(map(lambda l: l[0], linhas))))
+                if self.objetos[nome].selecionado:
+                    qp.setPen(QtGui.QPen(Qt.black,4))
+                    for linha in objeto.lines(world_view):
                         qp.drawLine(*linha)
 
             else:
