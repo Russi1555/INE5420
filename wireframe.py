@@ -68,17 +68,6 @@ class Wireframe:
     def points(self, world_view = False):
         self.render_to_view(world_view)
         return self.clipped_points
-
-    def lines(self, clip_key : int ,world_view = False):
-        """
-        Retorna as linhas do poligono
-
-        Args:
-            world_view (bool, optional): Se a renderizacao sera referente ao mundo. Defaults to False.
-        """
-        print(world_view, clip_key)
-        lines = self.render_to_view(clip_key,world_view)
-        return lines
     
     def clip_CS(self, line: list):
         """
@@ -191,12 +180,11 @@ class Wireframe:
             lines.append(line)
         return lines
           
-    def render_to_view(self, clip_key : int, world_view = False):
+    def render_to_view(self, clip_key : int):
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
         clip = self.clip_CS if clip_key == 1 else self.clip_LB if clip_key==2 else lambda e:  e
-        print(clip_key)
         points = self.window.to_window_coords(self.coord_world)
         # Clipa todos os pontos linearizados
         lines = list(map(lambda line: clip(line), self.linearize(points)))
@@ -358,8 +346,10 @@ class Wireframe_filled(Wireframe):
         super().__init__(label, coord_list, closed, color)
 
     
-    def render_to_view(self, clip_key = False, world_view=False):
-
+    def render_to_view(self, clip_key = False): 
+        
+        clip = self.clip_CS if clip_key == 1 else self.clip_LB if clip_key==2 else lambda e:  e
+        
         # Lista de poligonos a serem renderizados
         poligons: list = []
 
@@ -369,12 +359,11 @@ class Wireframe_filled(Wireframe):
         # Clipa todos os pontos de acordo com Cohen Sutherland
         points = self.window.to_window_coords(self.coord_world)
         lines = self.linearize(points)
-        lines = list(map(lambda line: self.clip_CS(line), self.linearize(points)))
+        lines = list(map(lambda line: clip(line), self.linearize(points)))
         lines = list(filter(lambda line: line is not None and line[0] is not None and line[1] is not None, lines))
 
+        # Poligono completamente fora
         if lines == []: return [lines]
-
-        # TODO poligono completamente fora da janela
 
         # Separa o poligonos nos poligonos menores a serem renderizados
         this_poligon = []
@@ -391,7 +380,6 @@ class Wireframe_filled(Wireframe):
         poligons.append(this_poligon)
 
         # Confere se o ultimo poligono e o primeiro sao o mesmo, se sim os une
-        # print("bordas: ",poligons[0][0][0], poligons[-1][-1][-1])
         if len(poligons) > 1 and poligons[0][0][0] == poligons[-1][-1][-1]:
             poligons[0] = poligons[-1] + poligons[0]
             poligons.pop()
@@ -427,7 +415,6 @@ class Wireframe_filled(Wireframe):
             pass
         # Dividem uma borda, basta criar uma linha que una os pontos
         elif abs(x0-x1) < precision or abs(y0-y1) < precision:
-            # print("Borda")
             final_lines.append(((x1, y1), (x0, y0)))
         else:
             # Descobre em quina tem que conectar
@@ -438,29 +425,6 @@ class Wireframe_filled(Wireframe):
             final_lines.append(((x1, y1), (xq, yq)))
             final_lines.append(((xq, yq), (x0, y0)))
         
-        # Dada a lista de poligonos os completa com a borda
-        # print("poli: ", poligons)
-        # for poligon in poligons:
-        #     ponta_inicial, ponta_final = poligon[0][0], poligon[-1][-1]
-        #     x0, y0 = ponta_inicial
-        #     x1, y1 = ponta_final
-        #     # print("pontas: ", ponta_inicial, ponta_final)
-        #     # Nao houve clipping
-        #     if ponta_inicial == ponta_final: continue
-        #     # Dividem uma borda, basta criar uma linha que una os pontos
-        #     elif abs(x0-x1) < precision or abs(y0-y1) < precision:
-        #         # print("Borda")
-        #         poligon.append(((x1, y1), (x0, y0)))
-        #     # Nao dividem borda :'(
-        #     else:
-        #         # Descobre em quina tem que conectar
-        #         xq = 1 if abs(x0-1) < precision or abs(x1-1) < precision else -1
-        #         yq = 1 if abs(y0-1) < precision or abs(y1-1) < precision else -1
-
-        #         # Conecta o fim a quina e a quina ao inicio
-        #         poligon.append(((x1, y1), (xq, yq)))
-        #         poligon.append(((xq, yq), (x0, y0)))
-
         # Transforma todos os pontos do poligono em ponto QpointF
         final_lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), final_lines))  
 
