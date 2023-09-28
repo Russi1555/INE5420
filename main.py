@@ -110,12 +110,12 @@ class MainWindow(QMainWindow):
             if args: botao.clicked.connect(lambda: func(*args))
             else: botao.clicked.connect(lambda: func())
 
-        def line_edit(x: int, y: int, w: int, h: int, text: str = None, text_width: int = None):
+        def line_edit(x: int, y: int, w: int, h: int,text: str = None, text_width: int = None):
             if not text is None:
                 label = QtWidgets.QLabel(self)
                 label.setGeometry(int(x-text_width), y+5, int(text_width), 20)
                 label.setText(f"{text}: ")
-            le = QtWidgets.QLineEdit(self)
+            le = QtWidgets.QLineEdit(text,self)  
             le.setGeometry(x, y, w,h)
             le.setStyleSheet("QLineEdit""{""border: 1px solid;""border-color: black""}")
             return le
@@ -167,19 +167,19 @@ class MainWindow(QMainWindow):
         atx,aty = 45,350
         
         # Botoes direcionais
-        self.tqt = line_edit(atx + 100, aty + 15, 30,30)
+        self.tqt = line_edit(atx + 100, aty + 15, 30,30,"10",1)
         button("↑", atx+30,aty,30,30, self.translacao, ("cim",))
         button("←", atx,aty+15,30,30, self.translacao, ("esq",))
         button("→", atx+60,aty+15,30,30, self.translacao, ("dir",))
         button("↓", atx+30,aty+30,30,30, self.translacao, ("bax",))
 
         # Botao de estica e encolhe
-        self.sqt = line_edit(atx + 100, aty + 75, 30,30)
+        self.sqt = line_edit(atx + 100, aty + 75, 30,30, "1.5",1)
         button("□", atx+10,aty+75,30,30, self.estica, (1))
         button("▫", atx+50,aty+75,30,30, self.estica, (-1))
 
         # Botao de giro
-        self.rqt = line_edit(atx + 100, aty + 120, 30, 30)
+        self.rqt = line_edit(atx + 100, aty + 120, 30, 30, "45",1)
         button("↻", atx+30,aty+120,30,30, self.girar, ())
 
         # Centro de transformação
