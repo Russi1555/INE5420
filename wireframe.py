@@ -394,35 +394,77 @@ class Wireframe_filled(Wireframe):
         poligons.append(this_poligon)
 
         # Confere se o ultimo poligono e o primeiro sao o mesmo, se sim os une
-        print("bordas: ",poligons[0][0][0], poligons[-1][-1][-1])
+        # print("bordas: ",poligons[0][0][0], poligons[-1][-1][-1])
         if len(poligons) > 1 and poligons[0][0][0] == poligons[-1][-1][-1]:
             poligons[0] = poligons[-1] + poligons[0]
             poligons.pop()
 
-        # Dada a lista de poligonos os completa com a borda
-        print("poli: ", poligons)
-        for poligon in poligons:
-            ponta_inicial, ponta_final = poligon[0][0], poligon[-1][-1]
+        final_lines = []
+        # Dada a lista de poligonos une todos
+        for i, poligon in enumerate(poligons):
+            if not i: 
+                final_lines += poligon
+                continue
+            ponta_inicial, ponta_final = poligon[0][0], final_lines[-1][-1]
             x0, y0 = ponta_inicial
             x1, y1 = ponta_final
-            # print("pontas: ", ponta_inicial, ponta_final)
-            # Nao houve clipping
             if ponta_inicial == ponta_final: continue
             # Dividem uma borda, basta criar uma linha que una os pontos
             elif abs(x0-x1) < precision or abs(y0-y1) < precision:
                 # print("Borda")
-                poligon.append(((x1, y1), (x0, y0)))
-            # Nao dividem borda :'(
+                final_lines.append(((x1, y1), (x0, y0)))
             else:
                 # Descobre em quina tem que conectar
                 xq = 1 if abs(x0-1) < precision or abs(x1-1) < precision else -1
                 yq = 1 if abs(y0-1) < precision or abs(y1-1) < precision else -1
 
                 # Conecta o fim a quina e a quina ao inicio
-                poligon.append(((x1, y1), (xq, yq)))
-                poligon.append(((xq, yq), (x0, y0)))
+                final_lines.append(((x1, y1), (xq, yq)))
+                final_lines.append(((xq, yq), (x0, y0)))
+            final_lines += poligon
+
+        ponta_inicial, ponta_final = final_lines[0][0], final_lines[-1][-1]
+        x0, y0 = ponta_inicial
+        x1, y1 = ponta_final
+        if ponta_inicial == ponta_final: 
+            pass
+        # Dividem uma borda, basta criar uma linha que una os pontos
+        elif abs(x0-x1) < precision or abs(y0-y1) < precision:
+            # print("Borda")
+            final_lines.append(((x1, y1), (x0, y0)))
+        else:
+            # Descobre em quina tem que conectar
+            xq = 1 if abs(x0-1) < precision or abs(x1-1) < precision else -1
+            yq = 1 if abs(y0-1) < precision or abs(y1-1) < precision else -1
+
+            # Conecta o fim a quina e a quina ao inicio
+            final_lines.append(((x1, y1), (xq, yq)))
+            final_lines.append(((xq, yq), (x0, y0)))
+        
+        # Dada a lista de poligonos os completa com a borda
+        # print("poli: ", poligons)
+        # for poligon in poligons:
+        #     ponta_inicial, ponta_final = poligon[0][0], poligon[-1][-1]
+        #     x0, y0 = ponta_inicial
+        #     x1, y1 = ponta_final
+        #     # print("pontas: ", ponta_inicial, ponta_final)
+        #     # Nao houve clipping
+        #     if ponta_inicial == ponta_final: continue
+        #     # Dividem uma borda, basta criar uma linha que una os pontos
+        #     elif abs(x0-x1) < precision or abs(y0-y1) < precision:
+        #         # print("Borda")
+        #         poligon.append(((x1, y1), (x0, y0)))
+        #     # Nao dividem borda :'(
+        #     else:
+        #         # Descobre em quina tem que conectar
+        #         xq = 1 if abs(x0-1) < precision or abs(x1-1) < precision else -1
+        #         yq = 1 if abs(y0-1) < precision or abs(y1-1) < precision else -1
+
+        #         # Conecta o fim a quina e a quina ao inicio
+        #         poligon.append(((x1, y1), (xq, yq)))
+        #         poligon.append(((xq, yq), (x0, y0)))
 
         # Transforma todos os pontos do poligono em ponto QpointF
-        poligons = list(map(lambda pol: list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), pol)), poligons))  
+        final_lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), final_lines))  
 
-        return poligons
+        return final_lines

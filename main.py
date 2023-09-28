@@ -73,7 +73,7 @@ class MainWindow(QMainWindow):
             for key in novos_obs:
                 # print(novos_obs[key])
                 obj = novos_obs[key]
-                novo_obj = Wireframe(obj[0],obj[1],obj[2],obj[3])
+                novo_obj = Wireframe_filled(obj[0],obj[1],obj[2],obj[3])
                 self.objetos[key] = novo_obj
                 self.objetos[key].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
                 self.objetos[key].update_window(self.viewer_window)
