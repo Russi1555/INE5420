@@ -110,13 +110,13 @@ class MainWindow(QMainWindow):
             if args: botao.clicked.connect(lambda: func(*args))
             else: botao.clicked.connect(lambda: func())
 
-        def line_edit(x: int, y: int, w: int, h: int,text: str = None, text_width: int = None):
+        def line_edit(x: int, y: int, w: int, h: int, text: str = None, text_width: int = None, def_value: str = None):
             if not text is None:
                 label = QtWidgets.QLabel(self)
                 label.setGeometry(int(x-text_width), y+5, int(text_width), 20)
                 label.setText(f"{text}: ")
-            le = QtWidgets.QLineEdit(text,self)  
-            le.setGeometry(x, y, w,h)
+            le = QtWidgets.QLineEdit(def_value,self)  
+            le.setGeometry(x,y,w,h)
             le.setStyleSheet("QLineEdit""{""border: 1px solid;""border-color: black""}")
             return le
 
@@ -140,7 +140,6 @@ class MainWindow(QMainWindow):
             widget.valueChanged.connect(self.update)
             return widget
 
-
         # Gera o objeto viewport
         self.viewport = QtWidgets.QLabel()
         self.viewport.setGeometry(QtCore.QRect(200,10,990,600))
@@ -151,8 +150,6 @@ class MainWindow(QMainWindow):
         self.lista_objetos = ListWidget(self)
         self.lista_objetos.setGeometry(10,55,180,200)
         self.lista_objetos.itemClicked.connect(self.lista_objetos.clicked)
-
-        
         
         # Botao de novo objeto
         button("Novo Objeto", 50,20,100,30, novo_botao)
@@ -167,45 +164,41 @@ class MainWindow(QMainWindow):
         atx,aty = 45,350
         
         # Botoes direcionais
-        self.tqt = line_edit(atx + 100, aty + 15, 30,30,"10",1)
+        self.tqt = line_edit(atx + 100, aty + 15, 30,30, def_value="10",text_width=1)
         button("↑", atx+30,aty,30,30, self.translacao, ("cim",))
         button("←", atx,aty+15,30,30, self.translacao, ("esq",))
         button("→", atx+60,aty+15,30,30, self.translacao, ("dir",))
         button("↓", atx+30,aty+30,30,30, self.translacao, ("bax",))
 
         # Botao de estica e encolhe
-        self.sqt = line_edit(atx + 100, aty + 75, 30,30, "1.5",1)
+        self.sqt = line_edit(atx + 100, aty + 75, 30,30, def_value="1.5", text_width=1)
         button("□", atx+10,aty+75,30,30, self.estica, (1))
         button("▫", atx+50,aty+75,30,30, self.estica, (-1))
 
         # Botao de giro
-        self.rqt = line_edit(atx + 100, aty + 120, 30, 30, "45",1)
+        self.rqt = line_edit(atx + 100, aty + 120, 30, 30, def_value="45", text_width=1)
         button("↻", atx+30,aty+120,30,30, self.girar, ())
 
         # Centro de transformação
-        self.center_x = line_edit(atx, aty + 175, 30, 30, "X", 15)
-        self.center_y = line_edit(atx + 60, aty + 175, 30, 30, "Y", 15)
-        self.render_center_point = check_box(atx + 105, aty + 225, 15, 15, "Mostrar Ponto Central", 142)
+        self.center_x = line_edit(atx, aty + 175, 30, 30, text="X", text_width=15)
+        self.center_y = line_edit(atx + 60, aty + 175, 30, 30, text="Y", text_width=15)
 
         # Checkbox de visao de mundo
-        self.world_view_check_box = check_box(atx + 105, aty + 250, 15,15, "Visao de Mundo", 105)
-        
-        # Checkbox de transformacoes em objetos
-        self.transform_object_check_box = check_box(atx + 105, aty + 275, 15,15, "Transformar Objetos", 134)
+        self.world_view_check_box = check_box(atx + 105, aty + 225, 15,15, "Visao de Mundo", 105)
 
         # Slider de Clipping
-        self.slider_clip = slider(1,3,1,atx, aty + 320, 105,60)
+        self.slider_clip = slider(1, 3, 1, atx - 50, aty + 270, 105, 60)
         self.slider_label_1 = QtWidgets.QLabel(self)
         self.slider_label_1.setText("Clipping C")
-        self.slider_label_1.setGeometry(atx+110, aty +362, 145, 20)
+        self.slider_label_1.setGeometry(atx + 40, aty + 312, 145, 20)
 
         self.slider_label_1 = QtWidgets.QLabel(self)
         self.slider_label_1.setText("Clipping LB")
-        self.slider_label_1.setGeometry(atx+110, aty +338, 145, 20)
+        self.slider_label_1.setGeometry(atx + 40, aty + 288, 145, 20)
 
         self.slider_label_1 = QtWidgets.QLabel(self)
         self.slider_label_1.setText("No Clipping")
-        self.slider_label_1.setGeometry(atx+110, aty +315, 145, 20)
+        self.slider_label_1.setGeometry(atx + 40, aty + 265, 145, 20)
 
         self.update()
 
@@ -243,7 +236,8 @@ class MainWindow(QMainWindow):
 
         args = (tqt if dir == "dir" else -tqt if dir == "esq" else 0, tqt if dir == "bax" else -tqt if dir == "cim" else 0)
 
-        if int(self.transform_object_check_box.checkState()) == 0:
+        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
+        if not algum_selecionado:
             self.viewer_window.translade(*args)
         else:
             for objeto in self.objetos.values():
@@ -260,7 +254,8 @@ class MainWindow(QMainWindow):
             center (tuple): Centro da transformacao.
         """
         value = 1 if self.sqt.text() == '' else float(self.sqt.text()) ** tipo
-        if int(self.transform_object_check_box.checkState()) == 0:
+        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
+        if not algum_selecionado:
             self.viewer_window.stretch(value, value)
         else:
             for objeto in self.objetos.values():
@@ -277,7 +272,8 @@ class MainWindow(QMainWindow):
             center(tuple): Ponto Cental da rotacao.
         """
         angle = 0 if self.rqt.text() == '' else -float(self.rqt.text())
-        if int(self.transform_object_check_box.checkState()) == 0:
+        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
+        if not algum_selecionado:
             self.viewer_window.rotate(angle)
         else:
             for objeto in self.objetos.values():
@@ -299,12 +295,11 @@ class MainWindow(QMainWindow):
         
         # Le as checkbox da interface
         valor_clip = int(self.slider_clip.value())
-        show_cp: bool = int(self.render_center_point.checkState()) == 2
         world_view: bool = int(self.world_view_check_box.checkState()) == 2
         used_window = self.world_viewer if world_view else self.viewer_window
         
         # Renderiza o centro de transformacoes quando necessario
-        if show_cp and None not in self.center_point:
+        if None not in self.center_point:
             qp.setPen(QtGui.QPen(Qt.black, 4))
             cx, cy = used_window.to_window_coords([self.center_point])[0]
             center_in_view = (self.viewport.x() + ((cx+1)*self.viewport.width()/2), self.viewport.y() + (cy+1)*(self.viewport.height()/2))
