@@ -163,7 +163,6 @@ class Wireframe:
 
         return ret_1, ret_2
 
-
     def linearize(self, points: list) -> list:
         """Dada uma lista de pontos ordenados devolve todas as linhas que os ligam
 
