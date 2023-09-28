@@ -80,7 +80,7 @@ class Wireframe:
         lines = self.render_to_view(world_view)
         return lines
     
-    def clip_CS(self, line: list, window: list = [(-1,-1),(-1,1),(1,1),(1,-1)]):
+    def clip_CS(self, line: list):
         """
         Recebe uma lista de pontos e os clippa
 
@@ -88,9 +88,8 @@ class Wireframe:
             points (list): Lista de pontos que formam o poligono a ser clippado
             window (list, optional): Lista dos quatro pontos que formam a window (A clippagem eh feita)
         """
-        wxmin, wxmax = min(map(lambda e: e[0], window)), max(map(lambda e: e[0], window))
-        wymin, wymax = min(map(lambda e: e[1], window)), max(map(lambda e: e[1], window))
-
+        wxmin, wxmax = -1, 1
+        wymin, wymax = -1, 1
         enumESQ, enumDIR, enumBAX, enumCIM = 1, 2, 4, 8
         
         def in_window(point: tuple):
@@ -128,10 +127,10 @@ class Wireframe:
 
         return (clip(line[0], line[1]), clip(line[1], line[0]))
     
-    def clip_LB(self, line: list, window: list = [(-1,-1),(-1,1),(1,1),(1,-1)]):
+    def clip_LB(self, line: list):
         
-        xmin, xmax = min(map(lambda e: e[0], window)), max(map(lambda e: e[0], window))
-        ymin, ymax = min(map(lambda e: e[1], window)), max(map(lambda e: e[1], window))
+        xmin, xmax = -1, 1
+        ymin, ymax = -1, 1
         l1 = line[0]
         x1 = l1[0]
         y1 = l1[1]
@@ -140,8 +139,6 @@ class Wireframe:
         y2 = l2[1]
         dx = x2 - x1
         dy = y2 - y1
-        u1 = 0.0
-        u2 = 1.0
         p = [-dx ,dx, -dy, dy]
         q = [x1-xmin, xmax - x1, y1-ymin, ymax - y1]
         r = [ q[0]/p[0], q[1]/p[1], q[2]/p[2], q[3]/p[3]]
@@ -176,6 +173,7 @@ class Wireframe:
         
 
         return ret_1, ret_2
+
 
     def linearize(self, points: list) -> list:
         """Dada uma lista de pontos ordenados devolve todas as linhas que os ligam

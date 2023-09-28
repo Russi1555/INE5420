@@ -306,7 +306,7 @@ class MainWindow(QMainWindow):
                 if self.objetos[nome].selecionado:
                     qp.setPen(QtGui.QPen(Qt.black,4))
                     for linha in objeto.lines(world_view):
-                        qp.drawLine(*linha)
+                        if linha != []: qp.drawLine(*linha)
 
             else:
                 for linha in objeto.lines(world_view):
