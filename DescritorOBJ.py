@@ -114,6 +114,10 @@ class DescritorOBJ:
                     if identficador == "f":
                         objeto_carregando_close = True
                         objeto_carregando_filled = True
+                    elif identficador == "l" and objeto_carregando_vetores[0] == objeto_carregando_vetores[-1]:
+                        objeto_carregando_close = True
+                        objeto_carregando_filled = False
+                        
 
 
         dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor, objeto_carregando_filled]
