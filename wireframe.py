@@ -157,17 +157,66 @@ class Wireframe:
             return None
 
         return (clip(line[0], line[1]), clip(line[1], line[0]))
-  
+    
+    def clip_LB(self, line: list, window: list = [(-1,-1),(-1,1),(1,1),(1,-1)]):
+        
+        xmin, xmax = min(map(lambda e: e[0], window)), max(map(lambda e: e[0], window))
+        ymin, ymax = min(map(lambda e: e[1], window)), max(map(lambda e: e[1], window))
+        l1 = line[0]
+        x1 = l1[0]
+        y1 = l1[1]
+        l2 = line[1]
+        x2 = l2[0]
+        y2 = l2[1]
+        dx = x2 - x1
+        dy = y2 - y1
+        u1 = 0.0
+        u2 = 1.0
+        p = [-dx ,dx, -dy, dy]
+        q = [x1-xmin, xmax - x1, y1-ymin, ymax - y1]
+        r = [ q[0]/p[0], q[1]/p[1], q[2]/p[2], q[3]/p[3]]
+        #param1 = max(0,r[0],r[1],r[2],r[3])
+        #param2 = min(1,r[0],r[1],r[2],r[3])
+        i = 0
+        f_d = [0]
+        d_f = [1]
+        for val in r:
+            if p[i]<0:
+                f_d.append(val)
+            elif p[i]> 0:
+                d_f.append(val)
+            else:
+                if q[i] <0:
+                    if abs(val)==float("inf"):
+                        return None, None
+            i+=1
+        
+        param1 = max(f_d)
+        param2 = min(d_f)   
+
+        ret_1 = (x1,y1)
+        ret_2 = (x2,y2)
+
+        if param1 > param2:
+            return None, None
+        if param1 != 0:
+            ret_1 = (x1+param1*(dx), y1+param1*(dy))
+        if param2 != 1:
+            ret_2 = (x1+param2*(dx), y1+param2*(dy))
+        
+
+        return ret_1, ret_2
+
+
     def render_to_view(self, world_view = False):
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
-
         clipped_points = self.window.to_window_coords(self.coord_world)
         self.clipped_lines = []
         for i, point in enumerate(clipped_points):
             if i == len(clipped_points) - 1: break
-            line = self.clip_CS((point, clipped_points[i+1]))
+            line = self.clip_LB((point, clipped_points[i+1]))
             if line and line[0] and line[1]: self.clipped_lines.append(line)
         # print(self.clipped_lines)
         self.clipped_lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), self.clipped_lines))
