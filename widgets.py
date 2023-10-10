@@ -26,15 +26,17 @@ class WindowInput(QMainWindow):
             widget.setText(text)
 
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(300, 200)
+        MainWindow.resize(320, 200)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
         # Texto puro da janela
         plain_text("Nome", (20, 30, 71, 16))
-        plain_text("Coordenadas", (20, 60, 71, 16))
+        plain_text("Coordenadas", (20, 60, 91, 16))
         plain_text("obs: Coordenadas em formato (x1,y1) (x2,y2)...", (20, 80, 300, 16))
         plain_text("Cor:  R:           G:             B:", (20,100,200,16))
+        plain_text("Poligono fechado? ",(20, 120, 200, 17))
+        plain_text("Poligono preenchido? ",(20, 140, 200, 17))
 
         # Leitores da cor
         self.r = QtWidgets.QLineEdit(self.centralwidget)
@@ -51,28 +53,28 @@ class WindowInput(QMainWindow):
 
         # Botao de criar objeto
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(20, 130, 251, 23))
+        self.pushButton.setGeometry(QtCore.QRect(20, 170, 251, 23))
         self.pushButton.setObjectName("pushButton")
         self.pushButton.setText("Criar")
 
         # Leitor do nome
         self.nome = QtWidgets.QLineEdit(self.centralwidget)
-        self.nome.setGeometry(QtCore.QRect(100, 30, 171, 20))
+        self.nome.setGeometry(QtCore.QRect(110, 30, 181, 20))
         self.nome.setObjectName("Nome")
 
         # Leitor das coordenadas
         self.coords = QtWidgets.QLineEdit(self.centralwidget)
-        self.coords.setGeometry(QtCore.QRect(100, 60, 171, 20))
+        self.coords.setGeometry(QtCore.QRect(110, 60, 181, 20))
         self.coords.setObjectName("Coordenadas")       
 
         # Checbox de check poligon
         self.close_polygon = QCheckBox(self.centralwidget)
-        self.close_polygon.setGeometry(275, 63, 15, 15)
+        self.close_polygon.setGeometry(170, 120, 15, 15)
         self.close_polygon.setToolTip("Marque essa caixa para fechar o poligono (ex: transformar 2 linhas em um triangulo)")
 
         # Checbox de check filled
         self.filled_polygon = QCheckBox(self.centralwidget)
-        self.filled_polygon.setGeometry(275, 100, 15, 15)
+        self.filled_polygon.setGeometry(170, 140, 200, 17)
         self.filled_polygon.setToolTip("Marque essa caixa para preencher o poligono com a cor escolhida")
 
         # Dados sobre a Janela
