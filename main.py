@@ -1,7 +1,7 @@
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QCheckBox, QSlider
 from PyQt5.QtCore import Qt
-from wireframe import Wireframe, ViewWindow, Wireframe_filled
+from wireframe import Wireframe, ViewWindow, Wireframe_filled, Curved2D
 from DescritorOBJ import DescritorOBJ
 import re
 import sys
@@ -207,7 +207,7 @@ class MainWindow(QMainWindow):
         self.update()
 
     def instanciarNovoObjeto(self, pacote_n_c):
-        nome, coords, close, cor, filled = pacote_n_c
+        nome, coords, close, cor, filled, curvado = pacote_n_c
         self.lista_objetos.addItem(str(nome))
         if cor[0]==cor[1]==cor[2] and cor[0]=="":
             cor = QtGui.QColor(255,0,0)
@@ -219,8 +219,10 @@ class MainWindow(QMainWindow):
             print("VALORES INVALIDOS")
         else:
             coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
-        
-            if filled:
+            
+            if curvado:
+                self.objetos[nome]: Wireframe = Curved2D(nome,coords, close,cor)
+            elif filled:
                 self.objetos[nome]: Wireframe = Wireframe_filled(nome,coords, close,cor)
             else:
                 self.objetos[nome]: Wireframe = Wireframe(nome,coords, close,cor)

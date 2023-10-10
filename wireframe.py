@@ -428,3 +428,7 @@ class Wireframe_filled(Wireframe):
         final_lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), final_lines))  
 
         return final_lines
+    
+class Curved2D(Wireframe):
+    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor, additional_data: str = "") -> None:
+        super().__init__(label, coord_list, closed, color)

@@ -26,7 +26,7 @@ class WindowInput(QMainWindow):
             widget.setText(text)
 
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(320, 200)
+        MainWindow.resize(320, 220)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
@@ -37,6 +37,7 @@ class WindowInput(QMainWindow):
         plain_text("Cor:  R:           G:             B:", (20,100,200,16))
         plain_text("Poligono fechado? ",(20, 120, 200, 17))
         plain_text("Poligono preenchido? ",(20, 140, 200, 17))
+        plain_text("Objeto Curvado?",(20,160,200,17))
 
         # Leitores da cor
         self.r = QtWidgets.QLineEdit(self.centralwidget)
@@ -53,7 +54,7 @@ class WindowInput(QMainWindow):
 
         # Botao de criar objeto
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(20, 170, 251, 23))
+        self.pushButton.setGeometry(QtCore.QRect(20, 190, 251, 23))
         self.pushButton.setObjectName("pushButton")
         self.pushButton.setText("Criar")
 
@@ -77,6 +78,11 @@ class WindowInput(QMainWindow):
         self.filled_polygon.setGeometry(170, 140, 200, 17)
         self.filled_polygon.setToolTip("Marque essa caixa para preencher o poligono com a cor escolhida")
 
+        # Checbox de Curved2D
+        self.curvado = QCheckBox(self.centralwidget)
+        self.curvado.setGeometry(170, 160, 200, 17)
+        self.curvado.setToolTip("Marque essa caixa para que as coordenadas sejam interpretadas como objeto curvado")
+
         # Dados sobre a Janela
         MainWindow.setCentralWidget(self.centralwidget)
         MainWindow.setWindowTitle("Novo Objeto")
@@ -86,7 +92,7 @@ class WindowInput(QMainWindow):
         '''
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
-        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()],int(self.filled_polygon.checkState()) == 2))
+        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()],int(self.filled_polygon.checkState()) == 2, int(self.curvado.checkState()) == 2))
         self.close()
 
 class ListWidget(QtWidgets.QListWidget, QMainWindow):
