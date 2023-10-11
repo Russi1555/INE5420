@@ -1,7 +1,7 @@
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QCheckBox, QSlider
 from PyQt5.QtCore import Qt
-from wireframe import Wireframe, ViewWindow, Wireframe_filled, Curved2D
+from wireframe import *
 from DescritorOBJ import DescritorOBJ
 import re
 import sys
@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(self.top, self.left, self.window_width, self.window_height)
 
         # transformacoes da window
-        self.viewer_window = ViewWindow(200,200,330,200)
+        self.viewer_window = ViewWindow(0,0,10,10)
         
         # transformation quantities
         self.tqt: float = 0 #translation
@@ -221,9 +221,9 @@ class MainWindow(QMainWindow):
             coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
             
             if curvado:
-                self.objetos[nome]: Wireframe = Curved2D(nome,coords, close,cor)
+                self.objetos[nome]: Wireframe = Bezier(nome,coords,100,cor)
             elif filled:
-                self.objetos[nome]: Wireframe = Wireframe_filled(nome,coords, close,cor)
+                self.objetos[nome]: Wireframe = Wireframe_filled(nome,coords,close,cor)
             else:
                 self.objetos[nome]: Wireframe = Wireframe(nome,coords, close,cor)
 
@@ -336,9 +336,11 @@ class MainWindow(QMainWindow):
                     for linha in objeto.render_to_view(valor_clip):
                         if linha != []: qp.drawLine(*linha)
 
-            # Renderizacao de wireframes normais
+            # Renderizacao de wireframes e curvas de bezier normais
             else:
+                # print("Rendering----")
                 for linha in objeto.render_to_view(valor_clip):
+                    # print(f"drawing line {linha}")
                     qp.drawLine(*linha)
 
 if __name__ == "__main__":

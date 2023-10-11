@@ -432,3 +432,61 @@ class Wireframe_filled(Wireframe):
 class Curved2D(Wireframe):
     def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor, additional_data: str = "") -> None:
         super().__init__(label, coord_list, closed, color)
+
+class Bezier(Wireframe):
+
+    def T(self, t: float):
+        """
+        Gera a matriz T
+
+        Args:
+            t (float): valor t (0 <= t <= 1)
+        """
+        return np.array([t**3, t**2, t, 1])
+    
+    def K(self, Gk, t: float):
+        """
+        Dada uma matriz arbitraria de uma das dimensoes gera o ponto da dimensao em t
+
+        Args:
+            t (float): valor t (0 <= t <= 1)
+        """
+        return np.matmul(np.matmul(self.T(t), self.Mb), np.transpose(Gk))
+
+    def __init__(self, label: str, points: list, precision_points: int, color = QColor):
+        """
+        Construtor
+
+        Args:
+            label (str): Nome da curva de bezier
+            points (list): Lista de tuplas onde p = (x,y) no e lista = (p1, p2, p3, p4)
+            precision_points (int): Numero de pontos na curva de bezier
+            color (QColor, optional): Cor da curva renderizada. Defaults to QColor.
+        """
+        if len(points[0]) == 2:
+            points = list(map(lambda p: (p[0], p[1], 0), points))
+        self.Gbx = np.array(list(map(lambda p: p[0], points)))
+        self.Gby = np.array(list(map(lambda p: p[1], points)))
+        self.Gbz = np.array(list(map(lambda p: p[2], points)))
+        self.Mb = np.array([[-1,3,-3,1],[3,-6,3,0],[-3,3,0,0],[1,0,0,0]])
+
+        my_points = []
+        step = 1/(precision_points-1)
+        current_point = 0
+        precision = 1e-10
+        while (current_point <= 1+precision): 
+            my_points.append((float(self.K(self.Gbx, current_point)),float(self.K(self.Gby, current_point)),float(self.K(self.Gbz, current_point))))
+            current_point += step
+        
+        # print("points:")
+        # for point in my_points:
+        #     print(f"[{round(point[0],2)}, {round(point[1],2)}]")
+        my_points = list(map(lambda p: (p[0], p[1]), my_points))
+        super().__init__(label, my_points, closed = False, color = color)
+        
+if __name__ == "__main__":
+    b = Bezier("teste", [(1,0,0),(3,3,0),(6,3,0),(8,1,0)])
+    # pontos = b.linearize(5)
+    # for p in pontos:
+    #     print(f"[{round(p[0],3), round(p[1],3)}]")
+    print(b.K(b.Gby, 0.5))
