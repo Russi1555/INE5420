@@ -121,7 +121,5 @@ class DescritorOBJ:
 
 
         dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor, objeto_carregando_filled]
-        # print(dic_objetos)
-        print(dic_objetos)
         return dic_objetos
 

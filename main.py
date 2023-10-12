@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(self.top, self.left, self.window_width, self.window_height)
 
         # transformacoes da window
-        self.viewer_window = ViewWindow(0,0,10,10)
+        self.viewer_window = ViewWindow(-49,-30,99,60)
         
         # transformation quantities
         self.tqt: float = 0 #translation
@@ -148,7 +148,7 @@ class MainWindow(QMainWindow):
         self.viewport = QtWidgets.QLabel()
         self.viewport.setGeometry(QtCore.QRect(200,10,990,600))
         self.viewer_window.update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
-        self.world_viewer = ViewWindow(200,10,990,600)
+        self.world_viewer = ViewWindow(-495,-300,990,600)
         self.world_viewer.update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
 
         self.lista_objetos = ListWidget(self)
@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
         atx,aty = 45,350
         
         # Botoes direcionais
-        self.tqt = line_edit(atx + 100, aty + 15, 30,30, def_value="10",text_width=1)
+        self.tqt = line_edit(atx + 100, aty + 15, 30,30, def_value="1",text_width=1)
         button("↑", atx+30,aty,30,30, self.translacao, ("cim",))
         button("←", atx,aty+15,30,30, self.translacao, ("esq",))
         button("→", atx+60,aty+15,30,30, self.translacao, ("dir",))
@@ -221,7 +221,7 @@ class MainWindow(QMainWindow):
             coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
             
             if curvado:
-                self.objetos[nome]: Wireframe = Bezier(nome,coords,100,cor)
+                self.objetos[nome]: Wireframe = Bezier(nome,coords,cor)
             elif filled:
                 self.objetos[nome]: Wireframe = Wireframe_filled(nome,coords,close,cor)
             else:

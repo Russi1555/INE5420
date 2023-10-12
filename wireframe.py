@@ -5,24 +5,7 @@ Modulo com as primitivas graficas.
 from PyQt5.QtCore import QPointF
 from PyQt5.QtGui import QColor
 import numpy as np
-from math import sin, cos, radians, pi
-
-def unit_vector(vector):
-    return vector / np.linalg.norm(vector)
-
-def angle_between(v1, v2):
-    """ Returns the angle in radians between vectors 'v1' and 'v2'::
-
-            >>> angle_between((1, 0, 0), (0, 1, 0))
-            1.5707963267948966
-            >>> angle_between((1, 0, 0), (1, 0, 0))
-            0.0
-            >>> angle_between((1, 0, 0), (-1, 0, 0))
-            3.141592653589793
-    """
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
-    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+from math import sin, cos, radians
 
 class Wireframe:
     def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor) -> None:
@@ -183,7 +166,7 @@ class Wireframe:
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
-        clip = self.clip_CS if clip_key == 1 else self.clip_LB if clip_key==2 else lambda e:  e
+        clip = self.clip_CS if clip_key==1 else self.clip_LB if clip_key==2 else lambda e:  e
         points = self.window.to_window_coords(self.coord_world)
         # Clipa todos os pontos linearizados
         lines = list(map(lambda line: clip(line), self.linearize(points)))
@@ -453,7 +436,7 @@ class Bezier(Wireframe):
         """
         return np.matmul(np.matmul(self.T(t), self.Mb), np.transpose(Gk))
 
-    def __init__(self, label: str, points: list, precision_points: int, color = QColor):
+    def __init__(self, label: str, points: list, color = QColor):
         """
         Construtor
 
@@ -463,27 +446,68 @@ class Bezier(Wireframe):
             precision_points (int): Numero de pontos na curva de bezier
             color (QColor, optional): Cor da curva renderizada. Defaults to QColor.
         """
-        if len(points[0]) == 2:
-            points = list(map(lambda p: (p[0], p[1], 0), points))
+        self.closed = False
+        self.label = label
+        self.color = color
+        self.selecionado: bool = False
+        self.coord_world = points
+        # if len(self.pontos_controle[0]) == 2:
+        #     self.pontos_controle = list(map(lambda p: (p[0], p[1], 0), self.pontos_controle))
+        # self.Gbx = np.array(list(map(lambda p: p[0], self.pontos_controle)))
+        # self.Gby = np.array(list(map(lambda p: p[1], self.pontos_controle)))
+        # self.Gbz = np.array(list(map(lambda p: p[2], self.pontos_controle)))
+        # self.Mb = np.array([[-1,3,-3,1],[3,-6,3,0],[-3,3,0,0],[1,0,0,0]])
+
+        # my_points = []
+        # step = 1/(precision_points-1)
+        # current_point = 0
+        # precision = 1e-10
+        # while (current_point <= 1+precision): 
+        #     my_points.append((float(self.K(self.Gbx, current_point)),float(self.K(self.Gby, current_point)),float(self.K(self.Gbz, current_point))))
+        #     current_point += step
+        
+        # my_points = list(map(lambda p: (p[0], p[1]), my_points))
+        # super().__init__(label, [], closed = False, color = color)
+
+    def render_to_view(self, clip_key : int):
+        """
+        Atualiza a forma com que o objeto deve ser renderizado pela viewport.
+        """
+        clip = self.clip_CS if clip_key==1 else self.clip_LB if clip_key==2 else lambda e:  e
+        
+        # Converte pontos para coordenadas da window
+        points = self.window.to_window_coords(self.coord_world)
+
+        # Calcula o numero de pontos baseado no tamanho relativo da curva para a window
+        points_distance = ((points[0][0]-points[3][0])**2 + (points[0][1]-points[3][1])**2)**0.5
+        n_points =  max(30 * (points_distance/(2*2**0.5))**0.5, 4)
+
+        # print(n_points)
+
         self.Gbx = np.array(list(map(lambda p: p[0], points)))
         self.Gby = np.array(list(map(lambda p: p[1], points)))
-        self.Gbz = np.array(list(map(lambda p: p[2], points)))
+        # self.Gbz = np.array(list(map(lambda p: p[2], self.pontos_controle)))
         self.Mb = np.array([[-1,3,-3,1],[3,-6,3,0],[-3,3,0,0],[1,0,0,0]])
 
-        my_points = []
-        step = 1/(precision_points-1)
+        rendered_points = []
+        step = 1/(n_points-1)
         current_point = 0
         precision = 1e-10
         while (current_point <= 1+precision): 
-            my_points.append((float(self.K(self.Gbx, current_point)),float(self.K(self.Gby, current_point)),float(self.K(self.Gbz, current_point))))
+            rendered_points.append((float(self.K(self.Gbx, current_point)),float(self.K(self.Gby, current_point))))
             current_point += step
         
-        # print("points:")
-        # for point in my_points:
-        #     print(f"[{round(point[0],2)}, {round(point[1],2)}]")
-        my_points = list(map(lambda p: (p[0], p[1]), my_points))
-        super().__init__(label, my_points, closed = False, color = color)
+        rendered_points = list(map(lambda p: (p[0], p[1]), rendered_points))
+
+        # Clipa todos os pontos linearizados
+        lines = list(map(lambda line: clip(line), self.linearize(rendered_points)))
+        # Filtra linhas nulas
+        lines = list(filter(lambda line: line is not None and line[0] is not None and line[1] is not None, lines))
+        # Transforma as linhas em objetos renderizaveis
+        lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), lines))
         
+        return lines
+
 if __name__ == "__main__":
     b = Bezier("teste", [(1,0,0),(3,3,0),(6,3,0),(8,1,0)])
     # pontos = b.linearize(5)
