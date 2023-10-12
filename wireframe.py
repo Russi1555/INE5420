@@ -451,6 +451,7 @@ class Bezier(Wireframe):
         self.color = color
         self.selecionado: bool = False
         self.coord_world = points
+        self.center_point: tuple = np.array([(points[0][0]+points[3][0])/2, (points[0][1]+points[3][1])/2])
         # if len(self.pontos_controle[0]) == 2:
         #     self.pontos_controle = list(map(lambda p: (p[0], p[1], 0), self.pontos_controle))
         # self.Gbx = np.array(list(map(lambda p: p[0], self.pontos_controle)))
@@ -478,17 +479,17 @@ class Bezier(Wireframe):
         # Converte pontos para coordenadas da window
         points = self.window.to_window_coords(self.coord_world)
 
-        # Calcula o numero de pontos baseado no tamanho relativo da curva para a window
+        # Calcula o numero de pontos adequado baseado no tamanho relativo da curva para a window
         points_distance = ((points[0][0]-points[3][0])**2 + (points[0][1]-points[3][1])**2)**0.5
         n_points =  max(30 * (points_distance/(2*2**0.5))**0.5, 4)
 
-        # print(n_points)
-
+        # Gera os vetores para o eixo x e y
         self.Gbx = np.array(list(map(lambda p: p[0], points)))
         self.Gby = np.array(list(map(lambda p: p[1], points)))
         # self.Gbz = np.array(list(map(lambda p: p[2], self.pontos_controle)))
         self.Mb = np.array([[-1,3,-3,1],[3,-6,3,0],[-3,3,0,0],[1,0,0,0]])
 
+        # Calcula todos os pontos a serem renderizados
         rendered_points = []
         step = 1/(n_points-1)
         current_point = 0

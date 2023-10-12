@@ -38,6 +38,8 @@ class MainWindow(QMainWindow):
         self.center_x = None
         self.center_y = None
 
+        self.stdobjcount = 0
+
         self.descritor = DescritorOBJ()
         self.objetos = {}
         self.setStyleSheet("background-color: light grey")
@@ -73,7 +75,6 @@ class MainWindow(QMainWindow):
             for key in novos_obs:
                 # print(novos_obs[key])
                 obj = novos_obs[key]
-                print(obj)
                 if obj[4]:
                     novo_obj = Wireframe_filled(obj[0],obj[1],obj[2],obj[3])
                 else:
@@ -208,14 +209,17 @@ class MainWindow(QMainWindow):
 
     def instanciarNovoObjeto(self, pacote_n_c):
         nome, coords, close, cor, filled, curvado = pacote_n_c
+        if nome == "":
+            nome = f"objeto_{self.stdobjcount}"
         self.lista_objetos.addItem(str(nome))
-        if cor[0]==cor[1]==cor[2] and cor[0]=="":
+        if cor[0] == cor[1] == cor[2] == "":
             cor = QtGui.QColor(255,0,0)
         else:
-            cor = list(map(lambda e: 0 if e == "" else int(e), cor))
+            cor = list(map(lambda e: 0 if e == "" else max(int(e),255), cor))
             cor = QtGui.QColor(cor[0],cor[1],cor[2])
 
-        if nome =="" or coords == "":
+            self.stdobjcount += 1
+        if coords == "":
             print("VALORES INVALIDOS")
         else:
             coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
