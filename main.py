@@ -211,21 +211,20 @@ class MainWindow(QMainWindow):
         nome, coords, close, cor, filled, curvado = pacote_n_c
         if nome == "":
             nome = f"objeto_{self.stdobjcount}"
+            self.stdobjcount += 1
         self.lista_objetos.addItem(str(nome))
         if cor[0] == cor[1] == cor[2] == "":
             cor = QtGui.QColor(255,0,0)
         else:
             cor = list(map(lambda e: 0 if e == "" else max(int(e),255), cor))
             cor = QtGui.QColor(cor[0],cor[1],cor[2])
-
-            self.stdobjcount += 1
         if coords == "":
             print("VALORES INVALIDOS")
         else:
             coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
             
             if curvado:
-                self.objetos[nome]: Wireframe = Bezier(nome,coords,cor)
+                self.objetos[nome]: Wireframe = Curved2D(nome,coords,cor)
             elif filled:
                 self.objetos[nome]: Wireframe = Wireframe_filled(nome,coords,close,cor)
             else:

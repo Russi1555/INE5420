@@ -33,6 +33,9 @@ class Wireframe:
         self.selecionado: bool = False
         self.color: QColor = color #Vermelho como valor padrão
     
+    def __getitem__(self, key):
+        return self.coord_world[key]
+
     def window2view(self, point: tuple) -> tuple:
         """
         Converte os pontos da coordenada de window para viwport
@@ -410,10 +413,6 @@ class Wireframe_filled(Wireframe):
 
         return final_lines
     
-class Curved2D(Wireframe):
-    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor, additional_data: str = "") -> None:
-        super().__init__(label, coord_list, closed, color)
-
 class Bezier(Wireframe):
 
     def T(self, t: float):
@@ -551,6 +550,84 @@ class Bezier(Wireframe):
         # Calcula todos os pontos a serem renderizados
 
         return clip(n_points, clip_key==3)
+
+class Curved2D(Wireframe):
+    
+    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor(255,0,0), additional_data: str = "") -> None:
+        self.label = label
+        self.color = color
+        self.__selecionado = False
+        self.closed = False
+
+        # Cria uma lista de curvas de bezier a partir da entrada
+        self.curvas = [coord_list[:4]]
+        coord_list = coord_list[4:]
+        while coord_list != []:
+            self.curvas.append([self.curvas[-1][-1]] + coord_list[:3])
+            coord_list = coord_list[3:]
+        self.curvas = list(map(lambda pontos: Bezier("parte", pontos, color), self.curvas))
+    
+        self.update_center_point()
+
+    def update_center_point(self):
+        cxacc, cyacc = self.curvas[0][0]
+        for curva in self.curvas:
+            cxacc += curva[-1][0]
+            cyacc += curva[-1][1]
+        self.center_point = [cxacc/(len(self.curvas)+1), cyacc/(len(self.curvas)+1)]
+
+    @property
+    def selecionado(self):
+        return self.__selecionado
+        
+    @selecionado.setter
+    def selecionado(self, v: bool):
+        for curva in self.curvas:
+            curva.selecionado = v
+        self.__selecionado = v
+
+    def translade(self, dx: int, dy: int):
+        theta = radians(self.window.angle)
+        dx, dy = dx * cos(theta) - dy * sin(theta), dy * cos(theta) + dx * sin(theta)
+        self.center_point[0] += dx
+        self.center_point[1] += dy
+        for curva in self.curvas:
+            curva.transform([np.array([[1,0,0],[0,1,0],[dx, dy, 1]])])
+
+    def stretch(self, x_factor: int, y_factor: int, center: tuple[int] = (None, None)):
+        matrix = np.array([[x_factor,0,0],[0,y_factor,0],[0,0,1]])
+        if center == (None, None):
+            center = self.center_point
+
+        for curva in self.curvas:
+            curva.transform([curva.center_transformation(matrix, center=center)])
+        
+        self.update_center_point()
+    
+    def rotate(self, angle: float, center: tuple[int] = (None, None)):
+        matrix = np.array([[cos(radians(angle)), -sin(radians(angle)), 0], [sin(radians(angle)), cos(radians(angle)), 0], [0,0,1]])
+        if center == (None, None):
+            center = self.center_point
+        for curva in self.curvas:
+            curva.transform([curva.center_transformation(matrix, center=center)])
+        
+        self.update_center_point()
+
+    def update_viewport(self, xvw: int, yvw: int, widthvw: int, heigthvw: int) -> None:
+        super().update_viewport
+        for curva in self.curvas:
+            curva.update_viewport(xvw, yvw, widthvw, heigthvw)
+    
+    def render_to_view(self, clip_key: int, points: list = None):
+        lines = []
+        for curva in self.curvas:
+            lines += curva.render_to_view(clip_key)
+        return lines
+
+    def update_window(self, window):
+        self.window = window
+        for curva in self.curvas:
+            curva.update_window(window)
 
 if __name__ == "__main__":
     b = Bezier("teste", [(1,0,0),(3,3,0),(6,3,0),(8,1,0)])
