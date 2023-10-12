@@ -162,12 +162,13 @@ class Wireframe:
             lines.append(line)
         return lines
           
-    def render_to_view(self, clip_key : int):
+    def render_to_view(self, clip_key : int, points: list = None):
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
+        if points is None: 
+            points = self.window.to_window_coords(self.coord_world)
         clip = self.clip_CS if clip_key==1 else self.clip_LB if clip_key==2 else lambda e:  e
-        points = self.window.to_window_coords(self.coord_world)
         # Clipa todos os pontos linearizados
         lines = list(map(lambda line: clip(line), self.linearize(points)))
         # Filtra linhas nulas
@@ -273,9 +274,6 @@ class Wireframe:
 
     def update_window(self, window):
         self.window = window
-
-    def point_in_viewport(self, point: tuple[int]):
-        return self.xvw <= point[0] <= self.xvw+self.widthvw and self.yvw <= point[1] <= self.yvw+self.heigthvw
 
 class ViewWindow(Wireframe):
     def __init__(self, x0: float, y0: float, width: float, heigth: float) -> None:
@@ -452,62 +450,107 @@ class Bezier(Wireframe):
         self.selecionado: bool = False
         self.coord_world = points
         self.center_point: tuple = np.array([(points[0][0]+points[3][0])/2, (points[0][1]+points[3][1])/2])
-        # if len(self.pontos_controle[0]) == 2:
-        #     self.pontos_controle = list(map(lambda p: (p[0], p[1], 0), self.pontos_controle))
-        # self.Gbx = np.array(list(map(lambda p: p[0], self.pontos_controle)))
-        # self.Gby = np.array(list(map(lambda p: p[1], self.pontos_controle)))
-        # self.Gbz = np.array(list(map(lambda p: p[2], self.pontos_controle)))
-        # self.Mb = np.array([[-1,3,-3,1],[3,-6,3,0],[-3,3,0,0],[1,0,0,0]])
-
-        # my_points = []
-        # step = 1/(precision_points-1)
-        # current_point = 0
-        # precision = 1e-10
-        # while (current_point <= 1+precision): 
-        #     my_points.append((float(self.K(self.Gbx, current_point)),float(self.K(self.Gby, current_point)),float(self.K(self.Gbz, current_point))))
-        #     current_point += step
-        
-        # my_points = list(map(lambda p: (p[0], p[1]), my_points))
-        # super().__init__(label, [], closed = False, color = color)
-
-    def render_to_view(self, clip_key : int):
-        """
-        Atualiza a forma com que o objeto deve ser renderizado pela viewport.
-        """
-        clip = self.clip_CS if clip_key==1 else self.clip_LB if clip_key==2 else lambda e:  e
-        
-        # Converte pontos para coordenadas da window
-        points = self.window.to_window_coords(self.coord_world)
-
-        # Calcula o numero de pontos adequado baseado no tamanho relativo da curva para a window
-        points_distance = ((points[0][0]-points[3][0])**2 + (points[0][1]-points[3][1])**2)**0.5
-        n_points =  max(30 * (points_distance/(2*2**0.5))**0.5, 4)
-
-        # Gera os vetores para o eixo x e y
-        self.Gbx = np.array(list(map(lambda p: p[0], points)))
-        self.Gby = np.array(list(map(lambda p: p[1], points)))
-        # self.Gbz = np.array(list(map(lambda p: p[2], self.pontos_controle)))
         self.Mb = np.array([[-1,3,-3,1],[3,-6,3,0],[-3,3,0,0],[1,0,0,0]])
 
-        # Calcula todos os pontos a serem renderizados
-        rendered_points = []
-        step = 1/(n_points-1)
-        current_point = 0
-        precision = 1e-10
-        while (current_point <= 1+precision): 
-            rendered_points.append((float(self.K(self.Gbx, current_point)),float(self.K(self.Gby, current_point))))
-            current_point += step
-        
-        rendered_points = list(map(lambda p: (p[0], p[1]), rendered_points))
+    def total_clip(self, n_points: float, no_clip: bool = False):
+        """
+        Clippa cada linha da curva de bezier (custoso mas clippa tudo naturalmente)
 
-        # Clipa todos os pontos linearizados
-        lines = list(map(lambda line: clip(line), self.linearize(rendered_points)))
+        Args:
+            step (float): distancia entre cada ponto
+            no_clip (bool): se deve haver clipping ou nao. Defaults to False
+        """
+        rendered_points = []
+        current_point = 0
+        step = 1/(n_points-1)
+        for p in range(0, n_points):
+            current_point = p * step 
+            rendered_points.append((float(self.K(self.Gbx, current_point)),float(self.K(self.Gby, current_point))))
+        
+        points = list(map(lambda p: (p[0], p[1]), rendered_points))
+
+        return super().render_to_view(3 if no_clip else 1, points)
+        
+    def partial_clip(self, n_points: float, _):
+        """
+        Clippa de acordo com o algoritmo que o professor mostrou em sala
+
+        Args:
+            step (float): distancia entre cada ponto
+        """
+
+        def in_window(point: tuple):
+            return -1 <= point[0] <= 1 and -1 <= point[1] <= 1
+
+        ponto_inicial = (float(self.K(self.Gbx, 0)),float(self.K(self.Gby, 0)))
+        ponto_final = (float(self.K(self.Gbx, 1)),float(self.K(self.Gby, 1)))
+
+        # Clippa o ponto final e inicial pra ver o que acontece
+        linha_clippada = self.clip_CS([ponto_inicial, ponto_final])
+        
+        step = 1/(n_points-1)
+
+        # Ponto inicial na window, portanto propagamos a renderizacao a partir dele
+        encountered_window = False
+        points_from_start = []
+        if not linha_clippada is None and linha_clippada[0] == ponto_inicial:
+            for p in range(0, n_points):
+                current_scale = p * step
+                current_point = (float(self.K(self.Gbx, current_scale)),float(self.K(self.Gby, current_scale)))
+                if not in_window(current_point):            
+                    points_from_start.append(self.clip_CS([points_from_start[-1], current_point])[1])
+                    encountered_window = True
+                    break 
+                points_from_start.append(current_point)
+        
+        # A propagacao da curva encontrou uma borda, mas o ponto final da curva ainda esta na window
+        points_from_end = []
+        if (encountered_window or points_from_start == []) and not linha_clippada is None and linha_clippada[1] == ponto_final:
+            # print("Im rendering from end")
+            for p in range(n_points-1, -1, -1):
+                current_scale = p * step
+                current_point = (float(self.K(self.Gbx, current_scale)),float(self.K(self.Gby, current_scale)))
+                if not in_window(current_point):
+                    points_from_end.append(self.clip_CS([points_from_end[-1], current_point])[1])
+                    encountered_window = True
+                    break 
+                points_from_end.append(current_point)
+
+        # lineariza o conjunto de pontos:
+        start_lines = []
+        end_lines = []
+        if points_from_start != []: start_lines = self.linearize(points_from_start)
+        if points_from_end != []: end_lines = self.linearize(points_from_end)
+        
+        lines = start_lines + end_lines
         # Filtra linhas nulas
         lines = list(filter(lambda line: line is not None and line[0] is not None and line[1] is not None, lines))
         # Transforma as linhas em objetos renderizaveis
         lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), lines))
         
         return lines
+    
+    def render_to_view(self, clip_key : int):
+        """
+        Atualiza a forma com que o objeto deve ser renderizado pela viewport.
+        """
+        clip = self.partial_clip if clip_key==2 else self.total_clip
+        
+        # Converte pontos para coordenadas da window
+        points = self.window.to_window_coords(self.coord_world)
+
+        # Calcula o numero de pontos adequado baseado no tamanho relativo da curva para a window
+        points_distance = ((points[0][0]-points[3][0])**2 + (points[0][1]-points[3][1])**2)**0.5
+        n_points =  int(max(30 * (points_distance/(2*2**0.5))**0.5, 4))
+
+        # Gera os vetores para o eixo x e y
+        self.Gbx = np.array(list(map(lambda p: p[0], points)))
+        self.Gby = np.array(list(map(lambda p: p[1], points)))
+        # self.Gbz = np.array(list(map(lambda p: p[2], self.pontos_controle)))
+
+        # Calcula todos os pontos a serem renderizados
+
+        return clip(n_points, clip_key==3)
 
 if __name__ == "__main__":
     b = Bezier("teste", [(1,0,0),(3,3,0),(6,3,0),(8,1,0)])
