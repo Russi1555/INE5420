@@ -205,6 +205,20 @@ class MainWindow(QMainWindow):
         self.slider_label_1.setText("No Clipping")
         self.slider_label_1.setGeometry(atx + 40, aty + 265, 145, 20)
 
+        # Slider de Clipping curvas
+        self.slider_clip_curvas = slider(1, 3, 1, atx + 170, aty + 270, 105, 60)
+        self.slider_label_1 = QtWidgets.QLabel(self)
+        self.slider_label_1.setText("Completo")
+        self.slider_label_1.setGeometry(atx + 240, aty + 312, 145, 20)
+
+        self.slider_label_1 = QtWidgets.QLabel(self)
+        self.slider_label_1.setText("Parcial")
+        self.slider_label_1.setGeometry(atx + 240, aty + 288, 145, 20)
+
+        self.slider_label_1 = QtWidgets.QLabel(self)
+        self.slider_label_1.setText("Sem clipping de curvas")
+        self.slider_label_1.setGeometry(atx + 240, aty + 265, 145, 20)
+
         self.update()
 
     def instanciarNovoObjeto(self, pacote_n_c):
@@ -224,7 +238,7 @@ class MainWindow(QMainWindow):
             coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
             
             if curvado:
-                self.objetos[nome]: Wireframe = Curved2D(nome,coords,cor)
+                self.objetos[nome]: Wireframe = Curved2D(nome,coords, False, cor)
             elif filled:
                 self.objetos[nome]: Wireframe = Wireframe_filled(nome,coords,close,cor)
             else:
@@ -304,6 +318,7 @@ class MainWindow(QMainWindow):
         
         # Le as checkbox da interface
         valor_clip = int(self.slider_clip.value())
+        valor_clip_curva = int(self.slider_clip_curvas.value())
         world_view: bool = int(self.world_view_check_box.checkState()) == 2
         used_window = self.world_viewer if world_view else self.viewer_window
         
@@ -342,7 +357,7 @@ class MainWindow(QMainWindow):
             # Renderizacao de wireframes e curvas de bezier normais
             else:
                 # print("Rendering----")
-                for linha in objeto.render_to_view(valor_clip):
+                for linha in objeto.render_to_view(valor_clip_curva):
                     # print(f"drawing line {linha}")
                     qp.drawLine(*linha)
 
