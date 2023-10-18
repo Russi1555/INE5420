@@ -26,7 +26,7 @@ class WindowInput(QMainWindow):
             widget.setText(text)
 
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(320, 220)
+        MainWindow.resize(320, 250)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
@@ -38,6 +38,7 @@ class WindowInput(QMainWindow):
         plain_text("Poligono fechado? ",(20, 120, 200, 17))
         plain_text("Poligono preenchido? ",(20, 140, 200, 17))
         plain_text("Objeto Curvado?",(20,160,200,17))
+        plain_text("Bezier [ ] BSpline [X]: ",(20,180,200,17))
 
         # Leitores da cor
         self.r = QtWidgets.QLineEdit(self.centralwidget)
@@ -51,12 +52,6 @@ class WindowInput(QMainWindow):
         self.b = QtWidgets.QLineEdit(self.centralwidget)
         self.b.setGeometry(QtCore.QRect(186,100,30,16))
         self.b.setObjectName("B")
-
-        # Botao de criar objeto
-        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(20, 190, 251, 23))
-        self.pushButton.setObjectName("pushButton")
-        self.pushButton.setText("Criar")
 
         # Leitor do nome
         self.nome = QtWidgets.QLineEdit(self.centralwidget)
@@ -82,6 +77,19 @@ class WindowInput(QMainWindow):
         self.curvado = QCheckBox(self.centralwidget)
         self.curvado.setGeometry(170, 160, 200, 17)
         self.curvado.setToolTip("Marque essa caixa para que as coordenadas sejam interpretadas como objeto curvado")
+        
+        # Checkbox tipo de Curved2D
+        self.BSpline = QCheckBox(self.centralwidget)
+        self.BSpline.setGeometry(170,180,200,17)
+
+        # Botao de criar objeto
+        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton.setGeometry(QtCore.QRect(20, 210, 251, 23))
+        self.pushButton.setObjectName("pushButton")
+        self.pushButton.setText("Criar")
+
+
+
 
         # Dados sobre a Janela
         MainWindow.setCentralWidget(self.centralwidget)
@@ -92,7 +100,7 @@ class WindowInput(QMainWindow):
         '''
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
-        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()],int(self.filled_polygon.checkState()) == 2, int(self.curvado.checkState()) == 2))
+        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()],int(self.filled_polygon.checkState()) == 2, int(self.curvado.checkState()) == 2,int(self.BSpline.checkState()) == 2))
         self.close()
 
 class ListWidget(QtWidgets.QListWidget, QMainWindow):
