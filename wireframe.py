@@ -625,22 +625,21 @@ class BSpline(Wireframe):
         self.color = color
         self.selecionado: bool = False
         self.coord_world = points
-        #self.center_point: tuple = np.array([(points[0][0]+points[3][0])/2, (points[0][1]+points[3][1])/2])
+        self.control_points = points
+        self.center_point: tuple = np.array([(points[0][0]+points[3][0])/2, (points[0][1]+points[3][1])/2])
         #self.Mb = np.array([[-1,3,-3,1],[3,-6,3,0],[-3,3,0,0],[1,0,0,0]])
 
 
 
-    def Calc_BSPLINE(control_points: list):
+    def Calc_BSPLINE(self):
         """
-        Construtor
+        Calcula os pontos da Spline e divide os segmentos em objetos BSpline.
+        """
 
-        Args:
-            label (str): Nome da curva
-            points (list): Lista de tuplas onde p = (x,y) no e lista = (p1, p2, p3, p4)
-            precision_points (int): Numero de pontos na curva
-            color (QColor, optional): Cor da curva renderizada. Defaults to QColor.
-        """
         def binomial(n, k):
+            """
+            calcula coeficiente binomial
+            """
             if 0 <= k <= n:
                 result = 1
                 for i in range(1, k + 1):
@@ -650,24 +649,26 @@ class BSpline(Wireframe):
             else:
                 return 0
 
-        # Number of control points
-        n = len(control_points)
+        # Numero de pontos de controle
+        n = len(self.control_points)
 
-        # Degree of the B-spline
-        degree = 3  # Replace with your actual degree
+        # Grau da Spline
+        degree = 3  # cubico
 
-        # Number of points to generate along the B-spline
-        num_points = 100  # Adjust this to your desired resolution
+        # Numero de pontos na Spline
+        num_points = 100
 
-        # Initialize the result array
-        bspline_points = []
+        # Array de objetos BSpline
+        resultados = []
 
         inicio = 0
         while inicio < n-1:
-            print(control_points)
-            segmento_atual = control_points[inicio:inicio+4]
-            print(segmento_atual)
-            # Calculate the B-spline points
+
+            bspline_points = []
+
+            segmento_atual = self.control_points[inicio:inicio+4]
+
+            # Calcula os pontos
             for i in range(num_points):
                 t = i / (num_points)
                 x = 0
@@ -680,24 +681,26 @@ class BSpline(Wireframe):
                     y += segmento_atual[j][1] * blend
 
                 bspline_points.append((x, y))
+
+            resultados.append(BSpline("parte",bspline_points,self.color))
             inicio +=3
 
-       # print((str(bspline_points).replace(", ",",")).replace("),",") "))
-
-        return bspline_points
+#        print(resultados)
+        return resultados
 
 
 
 class Curved2D(Wireframe):
     
-    def __init__(self, label: str, coord_list: list[tuple[int]],BSpline: bool, closed: bool = False, color = QColor(255,0,0), additional_data: str = "") -> None:
+    def __init__(self, label: str, coord_list: list[tuple[int]],spline: bool, closed: bool = False, color = QColor(255,0,0), additional_data: str = "") -> None:
         self.label = label
         self.color = color
         self.__selecionado = False
         self.closed = False
 
-        if BSpline:
-            self.curvas = Calc_BSPLINE(coord_list)
+        if spline:
+            spline = BSpline(self.label,coord_list,color)
+            self.curvas = spline.Calc_BSPLINE()
         else:
         # Cria uma lista de curvas de bezier a partir da entrada
             self.curvas = [coord_list[:4]]
@@ -709,11 +712,10 @@ class Curved2D(Wireframe):
 
 
                 self.curvas = list(map(lambda pontos: Bezier("parte", pontos, color), self.curvas))
-            print(self.curvas[0].coord_world)
-            self.update_center_point()
+        
+        self.update_center_point()
 
     def update_center_point(self):
-        print(self.curvas)
         cxacc, cyacc = self.curvas[0][0]
         for curva in self.curvas:
             cxacc += curva[-1][0]
