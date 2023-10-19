@@ -595,6 +595,9 @@ class BSpline(Wireframe):
                 y[i] += y[i+1]
                 # z[i] += z[i+1]
             points.append((x[0],y[0]))
+            if (x[0],y[0]) in self.set_points:
+                print(f"ponto {x[0], y[0]} repetido")
+            self.set_points.add((x[0],y[0]))
         return points
 
     def Get_Window_Points(self, points: list):
@@ -622,9 +625,14 @@ class BSpline(Wireframe):
       
     def render_to_view(self, clip_key: int, points: list = None):
         points = []
+        self.set_points = set()
         for i in range(len(self.control_points)-3):
             cpoints = self.window.to_window_coords(self.control_points[i:i+4]) 
             points += self.Get_Window_Points(cpoints)
+
+        if clip_key == 1:
+            return super().render_to_view(clip_key, points)
+        
         lines = self.linearize(points)
 
         lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), lines))
