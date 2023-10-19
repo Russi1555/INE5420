@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from PyQt5 import QtGui, QtWidgets, QtCore
-from wireframe import Wireframe, Wireframe_filled
+from wireframe import Wireframe, Wireframe_filled, Curved2D, BSpline
 
 class DescritorOBJ:
     def __init__(self):
@@ -24,18 +24,31 @@ class DescritorOBJ:
             objeto = objetos[key]
             escrita_futura_coords = "x "
 
+            if type(objeto) == Curved2D:
+                coordenadas = []
+                for segmento in objeto.curvas:
+                    for ponto in segmento:
+                        if ponto not in coordenadas:
+                            coordenadas.append(ponto)
+                print(coordenadas)
+            elif type(objeto) == BSpline:
+                coordenadas = objeto.control_points
+            else:
+                coordenadas = objeto.coord_world
+
+
             escrita_v = ""
 
-            if len(objeto.coord_world) == 1:
-                if objeto.coord_world not in dic_verticies:
-                    dic_verticies[objeto.coord_world[0]] = contador_v
-                    escrita_v +="\n" + " v "+ objeto.coord_world[0]
+            if len(coordenadas) == 1:
+                if coordenadas not in dic_verticies:
+                    dic_verticies[coordenadas[0]] = contador_v
+                    escrita_v +="\n" + " v "+ coordenadas[0]
                     contador_v += 1
-                    escrita_futura_coords = "p "+str(dic_verticies[objeto.coord_world]) #TESTAR
+                    escrita_futura_coords = "p "+str(dic_verticies[coordenadas]) #TESTAR
 
             else:
 
-                for coord in objeto.coord_world:
+                for coord in coordenadas:
                     if coord not in dic_verticies:
                         dic_verticies[coord] = contador_v
                         escrita_v += "\n" + "v "+ str(coord[0]) + " " + str(coord[1]) + " " + "0"
@@ -44,6 +57,10 @@ class DescritorOBJ:
 
                 if type(objeto) == Wireframe_filled:
                     escrita_futura_coords="f"+ escrita_futura_coords[1:]
+                elif type(objeto) == Curved2D:
+                    escrita_futura_coords="b"+escrita_futura_coords[1:]
+                elif type(objeto) == BSpline:
+                    escrita_futura_coords="s"+escrita_futura_coords[1:]
                 else:
                     escrita_futura_coords="l"+ escrita_futura_coords[1:]
 
@@ -79,6 +96,8 @@ class DescritorOBJ:
         objeto_carregando_cor = QtGui.QColor(255,0,0) #se não específicado é vermelho
         objeto_carregando_close = False
         objeto_carregando_filled = False
+        objeto_carregando_bezier = False
+        objeto_carregando_spline = False
         for linha in arquivo:
            # print(linha)
             info = linha.split()
@@ -92,7 +111,7 @@ class DescritorOBJ:
                     contador_vetores+=1
                 elif identficador == 'o':
                     if objeto_carregando_nome != "": #adiciona o objeto pronto ao dicionario de objetos e limpa os buffers
-                        dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor, objeto_carregando_filled]
+                        dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor, objeto_carregando_filled, objeto_carregando_bezier, objeto_carregando_spline]
                         objeto_carregando_nome = ""
                         objeto_carregando_vetores = []
                         objeto_carregando_close = False
@@ -114,12 +133,26 @@ class DescritorOBJ:
                     if identficador == "f":
                         objeto_carregando_close = True
                         objeto_carregando_filled = True
+                        objeto_carregando_bezier = False
+                        objeto_carregando_spline = False
                     elif identficador == "l" and objeto_carregando_vetores[0] == objeto_carregando_vetores[-1]:
                         objeto_carregando_close = True
                         objeto_carregando_filled = False
+                        objeto_carregando_bezier = False
+                        objeto_carregando_spline = False
+                    elif identficador == "b":
+                        objeto_carregando_close = False
+                        objeto_carregando_filled = False
+                        objeto_carregando_bezier = True
+                        objeto_carregando_spline = False
+                    elif identficador == "s":
+                        objeto_carregando_close = False
+                        objeto_carregando_filled = False
+                        objeto_carregando_bezier = False
+                        objeto_carregando_spline = True
                         
 
 
-        dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor, objeto_carregando_filled]
+        dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor, objeto_carregando_filled, objeto_carregando_bezier, objeto_carregando_spline]
         return dic_objetos
 
