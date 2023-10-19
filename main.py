@@ -222,7 +222,7 @@ class MainWindow(QMainWindow):
         self.update()
 
     def instanciarNovoObjeto(self, pacote_n_c):
-        nome, coords, close, cor, filled, curvado, BSpline = pacote_n_c
+        nome, coords, close, cor, filled, curvado, spline = pacote_n_c
         if nome == "":
             nome = f"objeto_{self.stdobjcount}"
             self.stdobjcount += 1
@@ -236,8 +236,10 @@ class MainWindow(QMainWindow):
             print("VALORES INVALIDOS")
         else:        
             self.lista_objetos.addItem(str(nome))
-            if curvado:
-                self.objetos[nome]: Wireframe = Curved2D(nome,coords,BSpline, False, cor)
+            if curvado and not spline:
+                self.objetos[nome]: Wireframe = Curved2D(nome,coords, False,  False, cor)
+            elif curvado and spline:
+                self.objetos[nome]: BSpline = BSpline(nome, coords, cor)
             elif filled:
                 self.objetos[nome]: Wireframe = Wireframe_filled(nome,coords,close,cor)
             else:

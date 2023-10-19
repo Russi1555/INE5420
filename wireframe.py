@@ -12,7 +12,7 @@ import sys
 from math import sin, cos, radians
 
 class Wireframe:
-    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor) -> None:
+    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor(255,0,0)) -> None:
         """Construtor
 
         Args:
@@ -329,7 +329,7 @@ class ViewWindow(Wireframe):
         return super().points(True)
         
 class Wireframe_filled(Wireframe):
-    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor, additional_data: str = "") -> None:
+    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor(255,0,0), additional_data: str = "") -> None:
         super().__init__(label, coord_list, closed, color)
 
     
@@ -437,7 +437,7 @@ class Bezier(Wireframe):
         """
         return np.matmul(np.matmul(self.T(t), self.Mb), np.transpose(Gk))
 
-    def __init__(self, label: str, points: list, color = QColor):
+    def __init__(self, label: str, points: list, color = QColor(255,0,0)):
         """
         Construtor
 
@@ -555,62 +555,8 @@ class Bezier(Wireframe):
 
         return clip(n_points, clip_key==3)
 
-class B_SplineDrawer(QMainWindow):
-    def __init__(self, control_points):
-
-        def binomial(n, k):
-            if 0 <= k <= n:
-                result = 1
-                for i in range(1, k + 1):
-                    result *= (n - i + 1)
-                    result //= i
-                return result
-            else:
-                return 0
-    
-        super().__init__()
-        self.control_points = control_points
-        self.setWindowTitle('B-Spline Drawer')
-        self.setGeometry(100, 100, 800, 600)
-        # Number of control points
-        n = len(control_points)
-
-        # Degree of the B-spline
-        degree = 3  # Replace with your actual degree
-
-        # Number of points to generate along the B-spline
-        num_points = 100  # Adjust this to your desired resolution
-
-        # Initialize the result array
-        bspline_points = []
-
-        inicio = 0
-        while inicio < n-1:
-            print(control_points)
-            segmento_atual = self.control_points[inicio:inicio+4]
-            print(segmento_atual)
-            # Calculate the B-spline points
-            for i in range(num_points):
-                t = i / (num_points)
-                x = 0
-                y = 0
-
-                # Calculate B-spline point using forward difference
-                for j in range(4):
-                    blend = binomial(degree, j) * ((1 - t) ** (degree - j)) * (t ** j)
-                    x += segmento_atual[j][0] * blend
-                    y += segmento_atual[j][1] * blend
-
-                bspline_points.append((x, y))
-            inicio +=3
-
-        print((str(bspline_points).replace(", ",",")).replace("),",") "))
-        exit()
-
-
-
 class BSpline(Wireframe):
-    def __init__(self, label: str, points: list, color = QColor):
+    def __init__(self, label: str, points: list, color = QColor(255,0,0), delta: float = 0.001):
         """
         Construtor
 
@@ -626,73 +572,68 @@ class BSpline(Wireframe):
         self.selecionado: bool = False
         self.coord_world = points
         self.control_points = points
-        self.center_point: tuple = np.array([(points[0][0]+points[3][0])/2, (points[0][1]+points[3][1])/2])
-        #self.Mb = np.array([[-1,3,-3,1],[3,-6,3,0],[-3,3,0,0],[1,0,0,0]])
+        self.delta = [delta, delta**2, delta**3]
+        self.Ed = np.array([[0,0,0,1],
+                            [self.delta[2], self.delta[1], self.delta[0], 0],
+                            [6*self.delta[2], 2*self.delta[1], 0, 0],
+                            [6*self.delta[2], 0, 0, 0]])
+        # self.center_point: tuple = np.array([(points[0][0]+points[3][0])/2, (points[0][1]+points[3][1])/2])
+        self.Mb = np.array([[-1/6, 3/6, -3/6, 1/6],
+                            [3/6, -1, 3/6, 0],
+                            [-3/6, 0, 3/6, 0],
+                            [1/6, 4/6, 1/6, 0]])
 
-
-
-    def Calc_BSPLINE(self):
+    def DesenhaCurvaFwdDiff(self, n, x, y):
         """
-        Calcula os pontos da Spline e divide os segmentos em objetos BSpline.
+        Calcula os pontos de um subsegmento da B-Spline
         """
+        # Pontos
+        points = [(x[0],y[0])]
+        for _ in range(1, n):
+            for i in range(3):
+                x[i] += x[i+1]
+                y[i] += y[i+1]
+                # z[i] += z[i+1]
+            points.append((x[0],y[0]))
+        return points
 
-        def binomial(n, k):
-            """
-            calcula coeficiente binomial
-            """
-            if 0 <= k <= n:
-                result = 1
-                for i in range(1, k + 1):
-                    result *= (n - i + 1)
-                    result //= i
-                return result
-            else:
-                return 0
+    def Get_Window_Points(self, points: list):
+        """
+        Dada uma janela de 4 pontos de controle retorna os pontos a serem renderizados
 
-        # Numero de pontos de controle
-        n = len(self.control_points)
+        Args:
+            points (list[tuple]): uma lista de 4 pontos de controle
 
-        # Grau da Spline
-        degree = 3  # cubico
+        Returns:
+            list[tuple]: os pontos renderizaveis
+        """
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        # zs = [p[2] for p in points]
+        # print(np.array(xs))
+        # print(self.Mb)
+        Cx = np.matmul(self.Mb, np.array(xs))
+        Cy = np.matmul(self.Mb, np.array(ys))
+        # Cz = np.matmul(self.Mb, np.array(zs))
+        Dx = np.matmul(self.Ed, Cx)
+        Dy = np.matmul(self.Ed, Cy)
+        # Dz = np.matmul(self.Ed, Cz)
+        return self.DesenhaCurvaFwdDiff(int(1/self.delta[0]), Dx, Dy)
+      
+    def render_to_view(self, clip_key: int, points: list = None):
+        points = []
+        for i in range(len(self.control_points)-3):
+            cpoints = self.window.to_window_coords(self.control_points[i:i+4]) 
+            points += self.Get_Window_Points(cpoints)
+        lines = self.linearize(points)
 
-        # Numero de pontos na Spline
-        num_points = 100
+        lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), lines))
 
-        # Array de objetos BSpline
-        resultados = []
-
-        inicio = 0
-        while inicio < n-1:
-
-            bspline_points = []
-
-            segmento_atual = self.control_points[inicio:inicio+4]
-
-            # Calcula os pontos
-            for i in range(num_points):
-                t = i / (num_points)
-                x = 0
-                y = 0
-
-                # Calculate B-spline point using forward difference
-                for j in range(4):
-                    blend = binomial(degree, j) * ((1 - t) ** (degree - j)) * (t ** j)
-                    x += segmento_atual[j][0] * blend
-                    y += segmento_atual[j][1] * blend
-
-                bspline_points.append((x, y))
-
-            resultados.append(BSpline("parte",bspline_points,self.color))
-            inicio +=3
-
-#        print(resultados)
-        return resultados
-
-
+        return lines
 
 class Curved2D(Wireframe):
     
-    def __init__(self, label: str, coord_list: list[tuple[int]],spline: bool, closed: bool = False, color = QColor(255,0,0), additional_data: str = "") -> None:
+    def __init__(self, label: str, coord_list: list[tuple[int]], spline: bool = False, closed: bool = False, color = QColor(255,0,0), additional_data: str = "") -> None:
         self.label = label
         self.color = color
         self.__selecionado = False
@@ -700,7 +641,6 @@ class Curved2D(Wireframe):
 
         if spline:
             spline = BSpline(self.label,coord_list,color)
-            self.curvas = spline.Calc_BSPLINE()
         else:
         # Cria uma lista de curvas de bezier a partir da entrada
             self.curvas = [coord_list[:4]]
@@ -778,7 +718,7 @@ class Curved2D(Wireframe):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     control_points = [(1,0), (3,3), (6,3), (8,1), (15,5), (6,6), (15,2)]
-    window = B_SplineDrawer(control_points)
-    window.show()
-    window.update()
+    # window = B_SplineDrawer(control_points)
+    # window.show()
+    # window.update()
     sys.exit(app.exec_())
