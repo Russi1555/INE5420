@@ -72,11 +72,16 @@ class MainWindow(QMainWindow):
             self.objetos = dict()
             self.lista_objetos.clear()
             novos_obs = self.descritor.load_objs()
+            print(novos_obs)
             for key in novos_obs:
                 # print(novos_obs[key])
                 obj = novos_obs[key]
                 if obj[4]:
                     novo_obj = Wireframe_filled(obj[0],obj[1],obj[2],obj[3])
+                elif obj[5]:
+                    novo_obj = Curved2D(obj[0],obj[1],False,False,obj[3])
+                elif obj[6]:
+                    novo_obj = BSpline(obj[0],obj[1],obj[3])
                 else:
                     novo_obj = Wireframe(obj[0],obj[1],obj[2],obj[3])
                 self.objetos[key] = novo_obj
@@ -222,7 +227,7 @@ class MainWindow(QMainWindow):
         self.update()
 
     def instanciarNovoObjeto(self, pacote_n_c):
-        nome, coords, close, cor, filled, curvado, spline = pacote_n_c
+        nome, coords, close, cor, filled, bezier, spline = pacote_n_c
         if nome == "":
             nome = f"objeto_{self.stdobjcount}"
             self.stdobjcount += 1
@@ -232,13 +237,13 @@ class MainWindow(QMainWindow):
         else:
             cor = list(map(lambda e: 0 if e == "" else max(int(e),255), cor))
             cor = QtGui.QColor(cor[0],cor[1],cor[2])
-        if coords == "" or curvado and (len(coords)-4) % 3:
+        if coords == "" or bezier and (len(coords)-4) % 3:
             print("VALORES INVALIDOS")
         else:        
             self.lista_objetos.addItem(str(nome))
-            if curvado and not spline:
+            if bezier:
                 self.objetos[nome]: Wireframe = Curved2D(nome,coords, False,  False, cor)
-            elif curvado and spline:
+            elif spline:
                 self.objetos[nome]: BSpline = BSpline(nome, coords, cor)
             elif filled:
                 self.objetos[nome]: Wireframe = Wireframe_filled(nome,coords,close,cor)

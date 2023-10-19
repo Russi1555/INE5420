@@ -35,10 +35,10 @@ class WindowInput(QMainWindow):
         plain_text("Coordenadas", (20, 60, 91, 16))
         plain_text("obs: Coordenadas em formato (x1,y1) (x2,y2)...", (20, 80, 300, 16))
         plain_text("Cor:  R:           G:             B:", (20,100,200,16))
-        plain_text("Poligono fechado? ",(20, 120, 200, 17))
-        plain_text("Poligono preenchido? ",(20, 140, 200, 17))
-        plain_text("Objeto Curvado?",(20,160,200,17))
-        plain_text("Bezier [ ] BSpline [X]: ",(20,180,200,17))
+        plain_text("Wireframe fechado? ",(20, 120, 200, 17))
+        plain_text("Wireframe preenchido? ",(20, 140, 200, 17))
+        plain_text("Curva Bezier",(20,160,200,17))
+        plain_text("Curva Spline: ",(20,180,200,17))
 
         # Leitores da cor
         self.r = QtWidgets.QLineEdit(self.centralwidget)
@@ -74,9 +74,9 @@ class WindowInput(QMainWindow):
         self.filled_polygon.setToolTip("Marque essa caixa para preencher o poligono com a cor escolhida")
 
         # Checbox de Curved2D
-        self.curvado = QCheckBox(self.centralwidget)
-        self.curvado.setGeometry(170, 160, 200, 17)
-        self.curvado.setToolTip("Marque essa caixa para que as coordenadas sejam interpretadas como objeto curvado")
+        self.bezier = QCheckBox(self.centralwidget)
+        self.bezier.setGeometry(170, 160, 200, 17)
+        self.bezier.setToolTip("Marque essa caixa para que as coordenadas sejam interpretadas como objeto curvado")
         
         # Checkbox tipo de Curved2D
         self.BSpline = QCheckBox(self.centralwidget)
@@ -100,7 +100,7 @@ class WindowInput(QMainWindow):
         '''
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
-        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()],int(self.filled_polygon.checkState()) == 2, int(self.curvado.checkState()) == 2,int(self.BSpline.checkState()) == 2))
+        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()],int(self.filled_polygon.checkState()) == 2, int(self.bezier.checkState()) == 2,int(self.BSpline.checkState()) == 2))
         self.close()
 
 class ListWidget(QtWidgets.QListWidget, QMainWindow):
