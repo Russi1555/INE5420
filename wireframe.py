@@ -169,10 +169,17 @@ class Wireframe:
             lines.append(line)
         return lines
           
-    def render_to_view(self, clip_key : int, points: list = None):
+    def render_to_view(self, clip_key : int, points: list = None, limiar_points: list = None):
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
+        if limiar_points == []:
+            limiar_points = [10000000, -10000000, 10000000, -1000000]
+            for point in self.coord_world:
+                limiar_points[0] = min(limiar_points[0], point[0])
+                limiar_points[1] = max(limiar_points[1], point[0])
+                limiar_points[2] = min(limiar_points[2], point[1])
+                limiar_points[3] = max(limiar_points[3], point[1])
         if points is None: 
             points = self.window.to_window_coords(self.coord_world)
         clip = self.clip_CS if clip_key==1 else self.clip_LB if clip_key==2 else lambda e:  e
@@ -183,7 +190,7 @@ class Wireframe:
         # Transforma as linhas em objetos renderizaveis
         lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), lines))
         
-        return lines
+        return lines, limiar_points
 
     ######### METODOS DE TRANSFORMACAO ########
 
@@ -333,7 +340,7 @@ class Wireframe_filled(Wireframe):
         super().__init__(label, coord_list, closed, color)
 
     
-    def render_to_view(self, clip_key = False): 
+    def render_to_view(self, clip_key = False, limiar_points: list = None): 
         
         clip = self.clip_CS if clip_key == 1 else self.clip_LB if clip_key==2 else lambda e:  e
         
@@ -343,8 +350,18 @@ class Wireframe_filled(Wireframe):
         # Sabe como eh floatin point ne, ruim comparar valores diretamente, isso aqui eh cheio de conversao
         precision = 1e-10                
 
+        if limiar_points == []:
+            limiar_points = [10000000, -1000000, 1000000, -1000000]
+            for point in self.coord_world:
+                limiar_points[0] = min(limiar_points[0], point[0])
+                limiar_points[1] = max(limiar_points[1], point[0])
+                limiar_points[2] = min(limiar_points[2], point[1])
+                limiar_points[3] = max(limiar_points[3], point[1])
+
         # Clipa todos os pontos de acordo com Cohen Sutherland
         points = self.window.to_window_coords(self.coord_world)
+            
+
         lines = self.linearize(points)
         lines = list(map(lambda line: clip(line), self.linearize(points)))
         lines = list(filter(lambda line: line is not None and line[0] is not None and line[1] is not None, lines))
@@ -533,14 +550,23 @@ class Bezier(Wireframe):
         
         return lines
     
-    def render_to_view(self, clip_key : int):
+    def render_to_view(self, clip_key : int, limiar_points: list = None):
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
         clip = self.partial_clip if clip_key==2 else self.total_clip
         
         # Converte pontos para coordenadas da window
+        if limiar_points == []:
+            limiar_points == [10000000, -1000000, 1000000, -1000000]
+
         points = self.window.to_window_coords(self.coord_world)
+        if not limiar_points is None:
+            for point in points:
+                limiar_points[0] = min(limiar_points[0], point[0])
+                limiar_points[1] = max(limiar_points[1], point[0])
+                limiar_points[2] = min(limiar_points[2], point[1])
+                limiar_points[3] = max(limiar_points[3], point[1])
 
         # Calcula o numero de pontos adequado baseado no tamanho relativo da curva para a window
         points_distance = ((points[0][0]-points[3][0])**2 + (points[0][1]-points[3][1])**2)**0.5
@@ -556,7 +582,7 @@ class Bezier(Wireframe):
         return clip(n_points, clip_key==3)
 
 class BSpline(Wireframe):
-    def __init__(self, label: str, points: list, color = QColor(255,0,0), delta: float = 0.001):
+    def __init__(self, label: str, points: list, color = QColor(255,0,0)):
         """
         Construtor
 
@@ -572,16 +598,15 @@ class BSpline(Wireframe):
         self.selecionado: bool = False
         self.coord_world = points
         self.control_points = points
-        self.delta = [delta, delta**2, delta**3]
-        self.Ed = np.array([[0,0,0,1],
-                            [self.delta[2], self.delta[1], self.delta[0], 0],
-                            [6*self.delta[2], 2*self.delta[1], 0, 0],
-                            [6*self.delta[2], 0, 0, 0]])
         # self.center_point: tuple = np.array([(points[0][0]+points[3][0])/2, (points[0][1]+points[3][1])/2])
         self.Mb = np.array([[-1/6, 3/6, -3/6, 1/6],
                             [3/6, -1, 3/6, 0],
                             [-3/6, 0, 3/6, 0],
                             [1/6, 4/6, 1/6, 0]])
+
+    def update_window(self, window):
+        super().update_window(window)
+        self.translade(0,0)
 
     def DesenhaCurvaFwdDiff(self, n, x, y):
         """
@@ -595,9 +620,6 @@ class BSpline(Wireframe):
                 y[i] += y[i+1]
                 # z[i] += z[i+1]
             points.append((x[0],y[0]))
-            if (x[0],y[0]) in self.set_points:
-                print(f"ponto {x[0], y[0]} repetido")
-            self.set_points.add((x[0],y[0]))
         return points
 
     def Get_Window_Points(self, points: list):
@@ -623,22 +645,24 @@ class BSpline(Wireframe):
         # Dz = np.matmul(self.Ed, Cz)
         return self.DesenhaCurvaFwdDiff(int(1/self.delta[0]), Dx, Dy)
       
-    def render_to_view(self, clip_key: int, points: list = None):
+    def render_to_view(self, clip_key: int, points: list = None, limiar_points: list = None):
         points = []
-        self.set_points = set()
+        
+        control_points = self.window.to_window_coords(self.control_points)
+        points_distance = ((control_points[0][0]-control_points[-1][0])**2 + (control_points[0][1]-control_points[-1][1])**2)**0.5
+        n_points =  int(max(60/(len(control_points)-3) * (points_distance/(2*2**0.5))**0.5, 1))
+        self.delta = [1/n_points, (1/n_points)**2, (1/n_points)**3]
+        self.Ed = np.array([[0,0,0,1],
+                            [self.delta[2], self.delta[1], self.delta[0], 0],
+                            [6*self.delta[2], 2*self.delta[1], 0, 0],
+                            [6*self.delta[2], 0, 0, 0]])
+
         for i in range(len(self.control_points)-3):
-            cpoints = self.window.to_window_coords(self.control_points[i:i+4]) 
+            cpoints = control_points[i:i+4] 
             points += self.Get_Window_Points(cpoints)
 
-        if clip_key == 1:
-            return super().render_to_view(clip_key, points)
-        
-        lines = self.linearize(points)
-
-        lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), lines))
-
-        return lines
-
+        return super().render_to_view(clip_key, points, limiar_points)
+    
 class Curved2D(Wireframe):
     
     def __init__(self, label: str, coord_list: list[tuple[int]], spline: bool = False, closed: bool = False, color = QColor(255,0,0), additional_data: str = "") -> None:
@@ -712,10 +736,18 @@ class Curved2D(Wireframe):
         for curva in self.curvas:
             curva.update_viewport(xvw, yvw, widthvw, heigthvw)
     
-    def render_to_view(self, clip_key: int, points: list = None):
+    def render_to_view(self, clip_key: int, points: list = None, limiar_points: list = None):
         lines = []
+        arbitrario = 100000000000
+        limiar_points = [arbitrario,-arbitrario, arbitrario, -arbitrario]
         for curva in self.curvas:
-            lines += curva.render_to_view(clip_key)
+            this_limiar = []
+            lines += curva.render_to_view(clip_key, limiar_points=this_limiar)
+            if not limiar_points is None:
+                limiar_points[0] = min(limiar_points[0], this_limiar[0])
+                limiar_points[1] = max(limiar_points[1], this_limiar[1])
+                limiar_points[2] = min(limiar_points[2], this_limiar[2])
+                limiar_points[3] = max(limiar_points[3], this_limiar[3])
         return lines
 
     def update_window(self, window):

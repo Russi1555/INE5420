@@ -184,6 +184,9 @@ class MainWindow(QMainWindow):
         self.rqt = line_edit(atx + 100, aty + 120, 30, 30, def_value="45", text_width=1)
         button("↻", atx+30,aty+120,30,30, self.girar, ())
 
+        # Botao de giro
+        button("S", atx+130,aty+250,30,30, self.snap, ())
+
         # Centro de transformação
         self.center_x = line_edit(atx, aty + 175, 30, 30, text="X", text_width=15)
         self.center_y = line_edit(atx + 60, aty + 175, 30, 30, text="Y", text_width=15)
@@ -237,7 +240,7 @@ class MainWindow(QMainWindow):
         else:        
             self.lista_objetos.addItem(str(nome))
             if curvado and not spline:
-                self.objetos[nome]: Wireframe = Curved2D(nome,coords, False,  False, cor)
+                self.objetos[nome]: Wireframe = Curved2D(nome,coords, False, False, cor)
             elif curvado and spline:
                 self.objetos[nome]: BSpline = BSpline(nome, coords, cor)
             elif filled:
@@ -305,6 +308,20 @@ class MainWindow(QMainWindow):
                 objeto.rotate(angle, self.center_point)
         self.update()
 
+    def snap(self):
+        wx, wy = self.viewer_window.coord_world[0][0], self.viewer_window.coord_world[0][1]
+        ww, wh = self.viewer_window.coord_world[2][0]-wx, self.viewer_window.coord_world[3][1]-wy
+        cx, cy = wx + ww/2, wy+wh/2
+
+        icx = (self.limiares[0]+self.limiares[1])/2
+        icy = (self.limiares[2]+self.limiares[3])/2
+        iw = (self.limiares[1]-self.limiares[0]) * 1.05
+        ih = (self.limiares[3]-self.limiares[2]) * 1.01
+        self.viewer_window.translade(icx-cx, icy-cy)
+        self.viewer_window.stretch(max(iw/ww, ih/wh), max(iw/ww, ih/wh))
+        self.update()
+    
+
     def paintEvent(self, _):
         """
         Responsavel por renderizar os wireframes
@@ -335,8 +352,10 @@ class MainWindow(QMainWindow):
         objetos = {} if not world_view else {"window": self.viewer_window}
         objetos.update(self.objetos)
         
-        # Itera sobre os Wireframes renderizando-os
+        # Itera sobre os Wireframes renderizando-os        
+        self.limiares = [10000000, -10000000, 10000000, -1000000]
         for nome, objeto in objetos.items():
+            this_limiares = []
             objeto.update_window(used_window)
             if nome == "window":
                 qp.setPen(QtGui.QPen(Qt.black,2))
@@ -347,20 +366,31 @@ class MainWindow(QMainWindow):
             
             if type(objeto) == Wireframe_filled:
                 qp.setBrush(QtGui.QBrush(objeto.color))
-                linhas = objeto.render_to_view(valor_clip)
+                linhas = objeto.render_to_view(valor_clip, limiar_points=this_limiares)
                 if linhas != [[]]:
                     qp.drawPolygon(QtGui.QPolygonF(list(map(lambda l: l[0], linhas))))
                 if self.objetos[nome].selecionado:
                     qp.setPen(QtGui.QPen(Qt.black,4))
-                    for linha in objeto.render_to_view(valor_clip):
+                    for linha in objeto.render_to_view(valor_clip, limiar_points=this_limiares):
                         if linha != []: qp.drawLine(*linha)
 
             # Renderizacao de wireframes e curvas de bezier normais
             else:
                 # print("Rendering----")
-                for linha in objeto.render_to_view(valor_clip_curva):
+                # print(this_limiares)
+                linhas, limiares = objeto.render_to_view(valor_clip_curva, limiar_points=this_limiares)
+                for linha in linhas:
                     # print(f"drawing line {linha}")
                     qp.drawLine(*linha)
+                # print(this_limiares)
+            
+            # Calcula os limites que a window deveria ter para que todos os objetos coubessem na tela
+            if nome != "window" and len(limiares) == 4:
+                # print(limiares)
+                self.limiares[0] = min(self.limiares[0], limiares[0])
+                self.limiares[1] = max(self.limiares[1], limiares[1])
+                self.limiares[2] = min(self.limiares[2], limiares[2])
+                self.limiares[3] = max(self.limiares[3], limiares[3])
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
