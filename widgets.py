@@ -3,9 +3,9 @@ Modulo com especializacoes de alguns widgets usados no projeto.
 """
 
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QMainWindow, QCheckBox
+from PyQt5.QtWidgets import QMainWindow, QCheckBox, QComboBox
 
-class WindowInput(QMainWindow):    
+class WindowInput(QMainWindow):
     '''
     Janela secundaria para input do novo objeto renderizavel
     '''
@@ -26,7 +26,7 @@ class WindowInput(QMainWindow):
             widget.setText(text)
 
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(320, 250)
+        MainWindow.resize(320, 230)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
@@ -34,11 +34,8 @@ class WindowInput(QMainWindow):
         plain_text("Nome", (20, 30, 71, 16))
         plain_text("Coordenadas", (20, 60, 91, 16))
         plain_text("obs: Coordenadas em formato (x1,y1) (x2,y2)...", (20, 80, 300, 16))
-        plain_text("Cor:  R:           G:             B:", (20,100,200,16))
-        plain_text("Wireframe fechado? ",(20, 120, 200, 17))
-        plain_text("Wireframe preenchido? ",(20, 140, 200, 17))
-        plain_text("Curva Bezier",(20,160,200,17))
-        plain_text("Curva Spline: ",(20,180,200,17))
+        plain_text("Cor:  R:           G:              B:", (20,100,200,16))
+        plain_text("Tipo de Objeto ",(20, 135, 200, 17))
 
         # Leitores da cor
         self.r = QtWidgets.QLineEdit(self.centralwidget)
@@ -63,33 +60,15 @@ class WindowInput(QMainWindow):
         self.coords.setGeometry(QtCore.QRect(110, 60, 181, 20))
         self.coords.setObjectName("Coordenadas")       
 
-        # Checbox de check poligon
-        self.close_polygon = QCheckBox(self.centralwidget)
-        self.close_polygon.setGeometry(170, 120, 15, 15)
-        self.close_polygon.setToolTip("Marque essa caixa para fechar o poligono (ex: transformar 2 linhas em um triangulo)")
-
-        # Checbox de check filled
-        self.filled_polygon = QCheckBox(self.centralwidget)
-        self.filled_polygon.setGeometry(170, 140, 200, 17)
-        self.filled_polygon.setToolTip("Marque essa caixa para preencher o poligono com a cor escolhida")
-
-        # Checbox de Curved2D
-        self.bezier = QCheckBox(self.centralwidget)
-        self.bezier.setGeometry(170, 160, 200, 17)
-        self.bezier.setToolTip("Marque essa caixa para que as coordenadas sejam interpretadas como objeto curvado")
-        
-        # Checkbox tipo de Curved2D
-        self.BSpline = QCheckBox(self.centralwidget)
-        self.BSpline.setGeometry(170,180,200,17)
+        self.chose_object = QComboBox(self.centralwidget)
+        self.chose_object.addItems({"Open Wireframe": "Open Wireframe", "Closed Wireframe": "Closed Wireframe", "Polygon": "Polygon", "Curved2D": "Curved2D", "BSpline": "BSpline"})
+        self.chose_object.setGeometry(130, 130, 155, 30)
 
         # Botao de criar objeto
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(20, 210, 251, 23))
+        self.pushButton.setGeometry(QtCore.QRect(20, 180, 251, 23))
         self.pushButton.setObjectName("pushButton")
         self.pushButton.setText("Criar")
-
-
-
 
         # Dados sobre a Janela
         MainWindow.setCentralWidget(self.centralwidget)
@@ -100,7 +79,7 @@ class WindowInput(QMainWindow):
         '''
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
-        self.submitClicked.emit((self.nome.text(), self.coords.text(), int(self.close_polygon.checkState()) == 2, [self.r.text(),self.g.text(),self.b.text()],int(self.filled_polygon.checkState()) == 2, int(self.bezier.checkState()) == 2,int(self.BSpline.checkState()) == 2))
+        self.submitClicked.emit((self.nome.text(), self.coords.text(), [self.r.text(),self.g.text(),self.b.text()], self.chose_object.currentText()))
         self.close()
 
 class ListWidget(QtWidgets.QListWidget, QMainWindow):

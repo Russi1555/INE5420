@@ -175,11 +175,21 @@ class Wireframe:
         """
         if limiar_points == []:
             limiar_points = [10000000, -10000000, 10000000, -1000000]
-            for point in self.coord_world:
-                limiar_points[0] = min(limiar_points[0], point[0])
-                limiar_points[1] = max(limiar_points[1], point[0])
-                limiar_points[2] = min(limiar_points[2], point[1])
-                limiar_points[3] = max(limiar_points[3], point[1])
+            if points is None:
+                for point in self.coord_world:
+                    limiar_points[0] = min(limiar_points[0], point[0])
+                    limiar_points[1] = max(limiar_points[1], point[0])
+                    limiar_points[2] = min(limiar_points[2], point[1])
+                    limiar_points[3] = max(limiar_points[3], point[1])
+            else:
+                for point in points:
+                    limiar_points[0] = min(limiar_points[0], point[0])
+                    limiar_points[1] = max(limiar_points[1], point[0])
+                    limiar_points[2] = min(limiar_points[2], point[1])
+                    limiar_points[3] = max(limiar_points[3], point[1])
+                SE = self.window.from_window_coords([(limiar_points[0], limiar_points[2])])[0]
+                ID = self.window.from_window_coords([(limiar_points[1], limiar_points[3])])[0]
+                limiar_points = [SE[0], ID[0], SE[1], ID[1]]
         if points is None: 
             points = self.window.to_window_coords(self.coord_world)
         clip = self.clip_CS if clip_key==1 else self.clip_LB if clip_key==2 else lambda e:  e
@@ -261,9 +271,11 @@ class Wireframe:
             matrix = np.matmul(matrix, trans)
         
         # Aplica as trasformacoes
+        print(self.coord_world, type(self))
         for i, (x, y) in enumerate(self.coord_world):
             vector = np.array([x,y,1])
             vector = vector.dot(matrix)
+            print(self.label)
             self.coord_world[i] = (vector[0], vector[1])
 
         coords = self.coord_world if not self.closed else self.coord_world[:-1]
@@ -307,6 +319,14 @@ class ViewWindow(Wireframe):
         points = list(map(lambda p: np.array((*p, 1)), points))
         matrix = np.matmul(self.desloc, self.rot)
         matrix = np.matmul(matrix, self.stret)
+        new_points = list(map(lambda vec: vec.dot(matrix), points))
+        new_points = list(map(lambda p: (p[0], p[1]), new_points))
+        return new_points
+
+    def from_window_coords(self, points: list):
+        points = list(map(lambda p: np.array((*p, 1)), points))
+        matrix = np.matmul(np.linalg.inv(self.stret), np.linalg.inv(self.rot))
+        matrix = np.matmul(matrix, np.linalg.inv(self.desloc))
         new_points = list(map(lambda vec: vec.dot(matrix), points))
         new_points = list(map(lambda p: (p[0], p[1]), new_points))
         return new_points
@@ -367,7 +387,7 @@ class Wireframe_filled(Wireframe):
         lines = list(filter(lambda line: line is not None and line[0] is not None and line[1] is not None, lines))
 
         # Poligono completamente fora
-        if lines == []: return [lines]
+        if lines == []: return [lines], limiar_points
 
         # Separa o poligonos nos poligonos menores a serem renderizados
         this_poligon = []
@@ -432,7 +452,7 @@ class Wireframe_filled(Wireframe):
         # Transforma todos os pontos do poligono em ponto QpointF
         final_lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), final_lines))  
 
-        return final_lines
+        return final_lines, limiar_points
     
 class Bezier(Wireframe):
 
@@ -548,7 +568,7 @@ class Bezier(Wireframe):
         # Transforma as linhas em objetos renderizaveis
         lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), lines))
         
-        return lines
+        return [lines]
     
     def render_to_view(self, clip_key : int, limiar_points: list = None):
         """
@@ -558,15 +578,14 @@ class Bezier(Wireframe):
         
         # Converte pontos para coordenadas da window
         if limiar_points == []:
-            limiar_points == [10000000, -1000000, 1000000, -1000000]
-
-        points = self.window.to_window_coords(self.coord_world)
-        if not limiar_points is None:
-            for point in points:
+            limiar_points = [10000000, -1000000, 1000000, -1000000]
+            for point in self.coord_world:
                 limiar_points[0] = min(limiar_points[0], point[0])
                 limiar_points[1] = max(limiar_points[1], point[0])
                 limiar_points[2] = min(limiar_points[2], point[1])
                 limiar_points[3] = max(limiar_points[3], point[1])
+
+        points = self.window.to_window_coords(self.coord_world)
 
         # Calcula o numero de pontos adequado baseado no tamanho relativo da curva para a window
         points_distance = ((points[0][0]-points[3][0])**2 + (points[0][1]-points[3][1])**2)**0.5
@@ -579,7 +598,7 @@ class Bezier(Wireframe):
 
         # Calcula todos os pontos a serem renderizados
 
-        return clip(n_points, clip_key==3)
+        return clip(n_points, clip_key==3), limiar_points
 
 class BSpline(Wireframe):
     def __init__(self, label: str, points: list, color = QColor(255,0,0)):
@@ -650,7 +669,7 @@ class BSpline(Wireframe):
         
         control_points = self.window.to_window_coords(self.control_points)
         points_distance = ((control_points[0][0]-control_points[-1][0])**2 + (control_points[0][1]-control_points[-1][1])**2)**0.5
-        n_points =  int(max(60/(len(control_points)-3) * (points_distance/(2*2**0.5))**0.5, 1))
+        n_points =  int(min(max(60/(len(control_points)-3) * (points_distance/(2*2**0.5))**0.5, 1),100))
         self.delta = [1/n_points, (1/n_points)**2, (1/n_points)**3]
         self.Ed = np.array([[0,0,0,1],
                             [self.delta[2], self.delta[1], self.delta[0], 0],
@@ -671,19 +690,15 @@ class Curved2D(Wireframe):
         self.__selecionado = False
         self.closed = False
 
-        if spline:
-            spline = BSpline(self.label,coord_list,color)
-        else:
-        # Cria uma lista de curvas de bezier a partir da entrada
-            self.curvas = [coord_list[:4]]
-            coord_list = coord_list[4:]
-            while coord_list != []:
-                self.curvas.append([self.curvas[-1][-1]] + coord_list[:3])
-                coord_list = coord_list[3:]
-            
-
-
-                self.curvas = list(map(lambda pontos: Bezier("parte", pontos, color), self.curvas))
+       
+    # Cria uma lista de curvas de bezier a partir da entrada
+        self.curvas = [coord_list[:4]]
+        coord_list = coord_list[4:]
+        while coord_list != []:
+            self.curvas.append([self.curvas[-1][-1]] + coord_list[:3])
+            coord_list = coord_list[3:]
+        
+        self.curvas = list(map(lambda pontos: Bezier("parte", pontos, color), self.curvas))
         
         self.update_center_point()
 
@@ -742,13 +757,15 @@ class Curved2D(Wireframe):
         limiar_points = [arbitrario,-arbitrario, arbitrario, -arbitrario]
         for curva in self.curvas:
             this_limiar = []
-            lines += curva.render_to_view(clip_key, limiar_points=this_limiar)
-            if not limiar_points is None:
-                limiar_points[0] = min(limiar_points[0], this_limiar[0])
-                limiar_points[1] = max(limiar_points[1], this_limiar[1])
-                limiar_points[2] = min(limiar_points[2], this_limiar[2])
-                limiar_points[3] = max(limiar_points[3], this_limiar[3])
-        return lines
+            my_lines, limiares = curva.render_to_view(clip_key, limiar_points=this_limiar)
+            my_lines = list(filter(lambda l: l is not None, my_lines))
+            lines += my_lines[0]
+            
+            limiar_points[0] = min(limiar_points[0], limiares[0])
+            limiar_points[1] = max(limiar_points[1], limiares[1])
+            limiar_points[2] = min(limiar_points[2], limiares[2])
+            limiar_points[3] = max(limiar_points[3], limiares[3])
+        return lines, limiar_points
 
     def update_window(self, window):
         self.window = window
