@@ -271,11 +271,9 @@ class Wireframe:
             matrix = np.matmul(matrix, trans)
         
         # Aplica as trasformacoes
-        print(self.coord_world, type(self))
         for i, (x, y) in enumerate(self.coord_world):
             vector = np.array([x,y,1])
             vector = vector.dot(matrix)
-            print(self.label)
             self.coord_world[i] = (vector[0], vector[1])
 
         coords = self.coord_world if not self.closed else self.coord_world[:-1]
