@@ -2,12 +2,10 @@
 Modulo com as primitivas graficas.
 """
 
-from PyQt5.QtCore import QPointF
-from PyQt5.QtGui import QColor
-import numpy as np
+from PyQt5.QtCore import QPointF, Qt
+from PyQt5.QtGui import QColor, QPainter, QPen
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtGui import QPainter, QPen
-from PyQt5.QtCore import Qt, QPointF
+import numpy as np
 import sys
 from math import sin, cos, radians
 
@@ -587,7 +585,7 @@ class Bezier(Wireframe):
 
         # Calcula o numero de pontos adequado baseado no tamanho relativo da curva para a window
         points_distance = ((points[0][0]-points[3][0])**2 + (points[0][1]-points[3][1])**2)**0.5
-        n_points =  int(max(30 * (points_distance/(2*2**0.5))**0.5, 4))
+        n_points =  int(min(max(60 * (points_distance/(2*2**0.5))**0.5, 4),200))
 
         # Gera os vetores para o eixo x e y
         self.Gbx = np.array(list(map(lambda p: p[0], points)))
@@ -749,7 +747,7 @@ class Curved2D(Wireframe):
         for curva in self.curvas:
             curva.update_viewport(xvw, yvw, widthvw, heigthvw)
     
-    def render_to_view(self, clip_key: int, points: list = None, limiar_points: list = None):
+    def render_to_view(self, clip_key: int, _: list = None, limiar_points: list = None):
         lines = []
         arbitrario = 100000000000
         limiar_points = [arbitrario,-arbitrario, arbitrario, -arbitrario]
@@ -773,7 +771,4 @@ class Curved2D(Wireframe):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     control_points = [(1,0), (3,3), (6,3), (8,1), (15,5), (6,6), (15,2)]
-    # window = B_SplineDrawer(control_points)
-    # window.show()
-    # window.update()
     sys.exit(app.exec_())

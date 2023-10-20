@@ -71,21 +71,21 @@ class MainWindow(QMainWindow):
         def carregar_objetos():
             self.objetos = dict()
             self.lista_objetos.clear()
-            novos_obs = self.descritor.load_objs()
-            for key in novos_obs:
-                obj = novos_obs[key]
-                if obj[4]:
-                    novo_obj = Wireframe_filled(obj[0],obj[1],obj[2],obj[3])
-                elif obj[5]:
-                    novo_obj = Curved2D(obj[0],obj[1],False,False,obj[3])
-                elif obj[6]:
-                    novo_obj = BSpline(obj[0],obj[1],obj[3])
+            objetos = self.descritor.load_objs()
+            # print(objetos)
+            for nome, obj in objetos.items():
+                if obj["type"] == "Polygon":
+                    novo_obj = Wireframe_filled(obj["name"], obj["points"], True, obj["color"])
+                elif obj["type"] == "Curved2D":
+                    novo_obj = Curved2D(obj["name"],obj["points"],False,False,obj["color"])
+                elif obj["type"] == "BSpline":
+                    novo_obj = BSpline(obj["name"],obj["points"],obj["color"])
                 else:
-                    novo_obj = Wireframe(obj[0],obj[1],obj[2],obj[3])
-                self.objetos[key] = novo_obj
-                self.objetos[key].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
-                self.objetos[key].update_window(self.viewer_window)
-                self.lista_objetos.addItem(str(key))
+                    novo_obj = Wireframe(obj["name"],obj["points"],obj["type"] == "Wireframe Closed",obj["color"])
+                self.objetos[nome] = novo_obj
+                self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
+                self.objetos[nome].update_window(self.viewer_window)
+                self.lista_objetos.addItem(str(nome))
             self.update()
 
         def button(label: str, x: int, y: int, w: int, h: int, func: Callable, args: list or None = None) -> QPushButton:
@@ -188,7 +188,7 @@ class MainWindow(QMainWindow):
         button("↻", atx+30,aty+120,30,30, self.girar, ())
 
         # Botao de giro
-        button("S", atx+130,aty+250,30,30, self.snap, ())
+        button("Ajustar aos Objetos", atx+410,aty+290,130,30, self.snap, ())
 
         # Centro de transformação
         self.center_x = line_edit(atx, aty + 175, 30, 30, text="X", text_width=15)
@@ -318,13 +318,12 @@ class MainWindow(QMainWindow):
 
         icx = (self.limiares[0]+self.limiares[1])/2
         icy = (self.limiares[2]+self.limiares[3])/2
-        iw = (self.limiares[1]-self.limiares[0]) * 1.05
-        ih = (self.limiares[3]-self.limiares[2]) * 1.01
+        iw = (self.limiares[1]-self.limiares[0]) * 1.1
+        ih = (self.limiares[3]-self.limiares[2]) * 1.1
         self.viewer_window.translade(icx-cx, icy-cy)
         self.viewer_window.stretch(max(iw/ww, ih/wh), max(iw/ww, ih/wh))
         self.update()
     
-
     def paintEvent(self, _):
         """
         Responsavel por renderizar os wireframes
@@ -380,11 +379,8 @@ class MainWindow(QMainWindow):
 
             # Renderizacao de wireframes e curvas de bezier normais
             else:
-                # print("Rendering----")
-                # print(this_limiares)
                 linhas, limiares = objeto.render_to_view(valor_clip_curva, limiar_points=this_limiares)
                 for linha in linhas:
-                    # print(f"drawing line {linha}")
                     qp.drawLine(*linha)
             
             # Calcula os limites que a window deveria ter para que todos os objetos coubessem na tela

@@ -15,6 +15,7 @@ class DescritorOBJ:
         '''
         if not os.path.exists("objetos"):
             os.makedirs("objetos")
+        
         arquivo_nome = os.path.join("objetos", "cena.obj")
         arquivo = open(arquivo_nome, "w")
         fila_para_escrita = list()
@@ -84,75 +85,48 @@ class DescritorOBJ:
             # print(temp)
             count_fila +=1
 
-    
     def load_objs(self):
-        arquivo_nome = os.path.join("objetos", "cena.obj")
-        arquivo = open(arquivo_nome, "r")
-        dic_vetores = dict()
-        dic_objetos = dict()
-        contador_vetores = 1
-        objeto_carregando_nome = ""
-        objeto_carregando_vetores = []
-        objeto_carregando_cor = QtGui.QColor(255,0,0) #se não específicado é vermelho
-        objeto_carregando_close = False
-        objeto_carregando_filled = False
-        objeto_carregando_bezier = False
-        objeto_carregando_spline = False
-        for linha in arquivo:
-           # print(linha)
-            info = linha.split()
-            if info == []:
-                pass
-            else:
+        with open("objetos/cena.obj", "r") as arquivo:
+            vetores, objetos = {}, {}
+            contador_vetores = 1
+            current_object = {"name": "", "points": None, "color": QtGui.QColor(255,0,0), "type": None}
+            for linha in arquivo:
+
+                info = linha.split()
+                if info == []: continue
                 # print(info)
                 identficador = info[0]
+                # Identifica as coordenadas 3D de um ponto
                 if identficador == 'v':
-                    dic_vetores[contador_vetores] = info[1:]
+                    vetores[contador_vetores] = info[1:]
                     contador_vetores+=1
+
+                # Identifica o inicio da descricao de um objeto
                 elif identficador == 'o':
-                    if objeto_carregando_nome != "": #adiciona o objeto pronto ao dicionario de objetos e limpa os buffers
-                        dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor, objeto_carregando_filled, objeto_carregando_bezier, objeto_carregando_spline]
-                        objeto_carregando_nome = ""
-                        objeto_carregando_vetores = []
-                        objeto_carregando_close = False
-                        objeto_carregando_cor = QtGui.QColor(255,0,0)
+                    current_object["name"] = info[1]
 
-                    objeto_carregando_nome = info[1]
-
+                # Indetifica uma cor RGB a ser lida
                 elif identficador == "Kd":
-                    objeto_carregando_cor = QtGui.QColor(int(info[1]),int(info[2]),int(info[3]))
+                    current_object["color"] = QtGui.QColor(int(info[1]),int(info[2]),int(info[3]))
+                    objetos[current_object["name"]] = current_object
+                    current_object = {"name": "", "points": None, "color": QtGui.QColor(255,0,0), "type": None}
+                   
 
+                # Identifica a lista de pontos do objeto e seu tipo e o carrega
                 else:
                     for key in info[1:]:
-                        #print(info[1:])
-                        #print(dic_vetores)
-                        key = int(key)
-                        tupla = (float(dic_vetores[key][0]), float((dic_vetores[key])[1]))
-                        objeto_carregando_vetores.append(tupla)
-                        #print(str(tupla))
-                    if identficador == "f":
-                        objeto_carregando_close = True
-                        objeto_carregando_filled = True
-                        objeto_carregando_bezier = False
-                        objeto_carregando_spline = False
-                    elif identficador == "l" and objeto_carregando_vetores[0] == objeto_carregando_vetores[-1]:
-                        objeto_carregando_close = True
-                        objeto_carregando_filled = False
-                        objeto_carregando_bezier = False
-                        objeto_carregando_spline = False
-                    elif identficador == "b":
-                        objeto_carregando_close = False
-                        objeto_carregando_filled = False
-                        objeto_carregando_bezier = True
-                        objeto_carregando_spline = False
-                    elif identficador == "s":
-                        objeto_carregando_close = False
-                        objeto_carregando_filled = False
-                        objeto_carregando_bezier = False
-                        objeto_carregando_spline = True
-                        
+                        ponto = (float(vetores[int(key)][0]), float((vetores[int(key)])[1]))
+                        if current_object["points"] is None: current_object["points"] = []
+                        current_object["points"].append(ponto)
 
-
-        dic_objetos[objeto_carregando_nome] = [objeto_carregando_nome, objeto_carregando_vetores,objeto_carregando_close, objeto_carregando_cor, objeto_carregando_filled, objeto_carregando_bezier, objeto_carregando_spline]
-        return dic_objetos
+                    if identficador == "s": current_object["type"] = "BSpline"
+                    elif identficador == "f": current_object["type"] = "Polygon"
+                    elif identficador == "b": current_object["type"] = "Curved2D"
+                    elif identficador == "l": 
+                        if current_object["points"][0] == current_object["points"][-1]:
+                            current_object["type"] = "Wireframe Closed"
+                        else:
+                            current_object["type"] = "Wireframe Open"
+                             
+        return objetos
 
