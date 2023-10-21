@@ -10,7 +10,7 @@ import sys
 from math import sin, cos, radians
 
 class Wireframe:
-    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor(255,0,0)) -> None:
+    def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0), closed = False) -> None:
         """Construtor
 
         Args:
@@ -306,7 +306,7 @@ class ViewWindow(Wireframe):
         self.width = width
         self.heigth = heigth
         self.angle = 0
-        super().__init__("window", [self.SE, self.SD, self.ID, self.IE], True, QColor)
+        super().__init__("window", [self.SE, self.SD, self.ID, self.IE], QColor(0,0,0), True)
         self.desloc = np.array([[1,0,0],[0,1,0],[-self.center_point[0],-self.center_point[1],1]])
         self.rot = np.array([[cos(radians(self.angle)), -sin(radians(self.angle)), 0], [sin(radians(self.angle)), cos(radians(self.angle)), 0], [0,0,1]])
         self.stret = np.array([[2/(self.width),0,0],[0,2/(self.heigth),0],[0,0,1]])    
@@ -352,8 +352,8 @@ class ViewWindow(Wireframe):
         return super().points(True)
         
 class Wireframe_filled(Wireframe):
-    def __init__(self, label: str, coord_list: list[tuple[int]], closed: bool = False, color = QColor(255,0,0), additional_data: str = "") -> None:
-        super().__init__(label, coord_list, closed, color)
+    def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0)) -> None:
+        super().__init__(label, coord_list, color, True)
 
     
     def render_to_view(self, clip_key = False, limiar_points: list = None): 
@@ -680,7 +680,7 @@ class BSpline(Wireframe):
     
 class Curved2D(Wireframe):
     
-    def __init__(self, label: str, coord_list: list[tuple[int]], spline: bool = False, closed: bool = False, color = QColor(255,0,0), additional_data: str = "") -> None:
+    def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0)) -> None:
         self.label = label
         self.color = color
         self.__selecionado = False

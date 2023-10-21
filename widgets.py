@@ -4,6 +4,7 @@ Modulo com especializacoes de alguns widgets usados no projeto.
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QMainWindow, QCheckBox, QComboBox
+from wireframe import Wireframe, Wireframe_filled, Curved2D, BSpline
 
 class WindowInput(QMainWindow):
     '''
@@ -79,7 +80,9 @@ class WindowInput(QMainWindow):
         '''
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
-        self.submitClicked.emit((self.nome.text(), self.coords.text(), [self.r.text(),self.g.text(),self.b.text()], self.chose_object.currentText()))
+        type_map = {"BSpline": BSpline, "Polygon": Wireframe_filled, "Curved2D": Curved2D, "Closed Wireframe": Wireframe, "Open Wireframe": Wireframe}
+        object_type = type_map[self.chose_object.currentText()]
+        self.submitClicked.emit((self.nome.text(), self.coords.text(), [self.r.text(),self.g.text(),self.b.text()], object_type, self.chose_object.currentText() == "Closed Wireframe"))
         self.close()
 
 class ListWidget(QtWidgets.QListWidget, QMainWindow):

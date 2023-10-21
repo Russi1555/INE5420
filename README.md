@@ -1,27 +1,18 @@
 
 # INE5420 - COMPUTAÇÃO GRÁFICA
 
-  
-
 <li><strong>NOVIDADES DO README ESTARÃO EM NEGRITO</strong></li>
 
-  
 
 <li><STRONG>Requisitos:</STRONG></li>
-
-  
 
 PyQt5
 
 numpy
 
-  
-
 <li><strong>Iniciando:</strong></li>
 
 make
-
-  
 
 <li><strong>Criando um novo objeto:</strong></li>
 

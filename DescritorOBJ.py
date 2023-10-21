@@ -85,7 +85,7 @@ class DescritorOBJ:
         with open("objetos/cena.obj", "r") as arquivo:
             vetores, objetos = {}, {}
             contador_vetores = 1
-            type_map = {"s": "BSpline", "f": "Polygon", "b": "Curved2D", "l": "Wireframe Open"}
+            type_map = {"s": BSpline, "f": Wireframe_filled, "b": Curved2D, "l": Wireframe}
             current_object = {"name": "", "points": None, "color": QtGui.QColor(255,0,0), "type": None}
             for linha in arquivo:
 
@@ -120,8 +120,6 @@ class DescritorOBJ:
 
                     # Salva o tipo correto
                     current_object["type"] = type_map[identficador]
-                    if current_object["type"] == "Wireframe Open" and current_object["points"][0] == current_object["points"][-1]:
-                        current_object["type"] = "Wireframe Closed"
                              
         return objetos
 

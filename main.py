@@ -74,14 +74,7 @@ class MainWindow(QMainWindow):
             objetos = self.descritor.load_objs()
             # print(objetos)
             for nome, obj in objetos.items():
-                if obj["type"] == "Polygon":
-                    novo_obj = Wireframe_filled(obj["name"], obj["points"], True, obj["color"])
-                elif obj["type"] == "Curved2D":
-                    novo_obj = Curved2D(obj["name"],obj["points"],False,False,obj["color"])
-                elif obj["type"] == "BSpline":
-                    novo_obj = BSpline(obj["name"],obj["points"],obj["color"])
-                else:
-                    novo_obj = Wireframe(obj["name"],obj["points"],obj["type"] == "Wireframe Closed",obj["color"])
+                novo_obj = obj["type"](obj["name"], obj["points"], obj["color"])
                 self.objetos[nome] = novo_obj
                 self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
                 self.objetos[nome].update_window(self.viewer_window)
@@ -228,7 +221,7 @@ class MainWindow(QMainWindow):
         self.update()
 
     def instanciarNovoObjeto(self, pacote_n_c):
-        nome, coords, cor, object_type = pacote_n_c
+        nome, coords, cor, object_type, closed = pacote_n_c
         if nome == "":
             nome = f"objeto_{self.stdobjcount}"
             self.stdobjcount += 1
@@ -240,17 +233,12 @@ class MainWindow(QMainWindow):
             cor = QtGui.QColor(cor[0],cor[1],cor[2])
         if coords == "" or object_type == "Curved2D" and (len(coords)-4) % 3:
             print("VALORES INVALIDOS")
-        else:        
+        else:
             self.lista_objetos.addItem(str(nome))
-            if object_type == "Curved2D":
-                self.objetos[nome]: Wireframe = Curved2D(nome,coords, False,  False, cor)
-            elif object_type == "BSpline":
-                self.objetos[nome]: BSpline = BSpline(nome, coords, cor)
-            elif object_type == "Polygon":
-                self.objetos[nome]: Wireframe = Wireframe_filled(nome,coords, True ,cor)
+            if closed:
+                self.objetos[nome] = Wireframe(nome,coords, cor, True)
             else:
-                self.objetos[nome]: Wireframe = Wireframe(nome,coords, object_type == "Closed Wireframe",cor)
-
+                self.objetos[nome] = object_type(nome, coords, cor)
             self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
             self.objetos[nome].update_window(self.viewer_window)
             self.update()
@@ -357,31 +345,34 @@ class MainWindow(QMainWindow):
         # Itera sobre os Wireframes renderizando-os        
         self.limiares = [10000000, -10000000, 10000000, -1000000]
         for nome, objeto in objetos.items():
-            this_limiares = []
-            objeto.update_window(used_window)
-            if nome == "window":
-                qp.setPen(QtGui.QPen(Qt.black,2))
-            elif self.objetos[nome].selecionado:
-                qp.setPen(QtGui.QPen(self.objetos[nome].color,4))
-            else:
-                qp.setPen(QtGui.QPen(self.objetos[nome].color,1))
             
+            objeto.update_window(used_window)
+            
+            # Determina qual a cor e grossura da caneta
+            if nome == "window": qp.setPen(QtGui.QPen(Qt.black,2))
+            elif self.objetos[nome].selecionado: qp.setPen(QtGui.QPen(self.objetos[nome].color,4))
+            else: qp.setPen(QtGui.QPen(self.objetos[nome].color,1))
+            
+            # Wireframe_filled/Polygon precisa ter outra rotina de renderizacao por ser preenchido
             if type(objeto) == Wireframe_filled:
                 qp.setBrush(QtGui.QBrush(objeto.color))
-                linhas, limiares = objeto.render_to_view(valor_clip, limiar_points=this_limiares)
+                linhas, limiares = objeto.render_to_view(valor_clip, limiar_points=[])
                 if linhas != [[]]:
                     qp.drawPolygon(QtGui.QPolygonF(list(map(lambda l: l[0], linhas))))
+                
+                # Renderiza a borda preta de quando o polygon eh selecionado
                 if self.objetos[nome].selecionado:
                     qp.setPen(QtGui.QPen(Qt.black,4))
-                    linhas , _ = objeto.render_to_view(valor_clip, limiar_points=this_limiares)
+                    linhas , _ = objeto.render_to_view(valor_clip, limiar_points=[])
                     for linha in linhas:
                         if linha != []: qp.drawLine(*linha)
+                
+                continue
 
             # Renderizacao de wireframes e curvas de bezier normais
-            else:
-                linhas, limiares = objeto.render_to_view(valor_clip_curva, limiar_points=this_limiares)
-                for linha in linhas:
-                    qp.drawLine(*linha)
+            linhas, limiares = objeto.render_to_view(valor_clip if type(objeto) == Wireframe else valor_clip_curva, limiar_points=[])
+            for linha in linhas:
+                qp.drawLine(*linha)
             
             # Calcula os limites que a window deveria ter para que todos os objetos coubessem na tela
             if nome != "window" and len(limiares) == 4:
