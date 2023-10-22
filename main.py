@@ -231,7 +231,7 @@ class MainWindow(QMainWindow):
         else:
             cor = list(map(lambda e: 0 if e == "" else min(int(e),255), cor))
             cor = QtGui.QColor(cor[0],cor[1],cor[2])
-        if coords == "" or object_type == "Curved2D" and (len(coords)-4) % 3:
+        if coords == "" or object_type == Curved2D and (len(coords)-4) % 3:
             print("VALORES INVALIDOS")
         else:
             self.lista_objetos.addItem(str(nome))

@@ -1,7 +1,7 @@
 
 # INE5420 - COMPUTAÇÃO GRÁFICA
 
-<li><strong>NOVIDADES DO README ESTARÃO EM NEGRITO</strong></li>
+<li><strong>NOVIDADES DO README ESTARÃO EM NEGRITO, HÁ UM OBJETO DE CADA TIPO CARREGAVEL</strong></li>
 
 
 <li><STRONG>Requisitos:</STRONG></li>
