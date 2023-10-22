@@ -584,8 +584,12 @@ class Bezier(Wireframe):
         points = self.window.to_window_coords(self.coord_world)
 
         # Calcula o numero de pontos adequado baseado no tamanho relativo da curva para a window
-        points_distance = ((points[0][0]-points[3][0])**2 + (points[0][1]-points[3][1])**2)**0.5
-        n_points =  int(min(max(60 * (points_distance/(2*2**0.5))**0.5, 4),200))
+        maxx = max(map(lambda p: p[0], points))
+        minx = min(map(lambda p: p[0], points))
+        maxy = max(map(lambda p: p[1], points))
+        miny = min(map(lambda p: p[1], points))
+        points_distance = ((maxx-minx)**2 + (maxy-miny)**2)**0.5
+        n_points =  int(min(50, max(10 , 60 * (points_distance/(2*2**0.5))**0.5)))
 
         # Gera os vetores para o eixo x e y
         self.Gbx = np.array(list(map(lambda p: p[0], points)))
@@ -664,8 +668,12 @@ class BSpline(Wireframe):
         points = []
         
         control_points = self.window.to_window_coords(self.control_points)
-        points_distance = ((control_points[0][0]-control_points[-1][0])**2 + (control_points[0][1]-control_points[-1][1])**2)**0.5
-        n_points =  int(min(max(60/(len(control_points)-3) * (points_distance/(2*2**0.5))**0.5, 1),100))
+        maxx = max(map(lambda p: p[0], control_points))
+        minx = min(map(lambda p: p[0], control_points))
+        maxy = max(map(lambda p: p[1], control_points))
+        miny = min(map(lambda p: p[1], control_points))
+        points_distance = ((maxx-minx)**2 + (maxy-miny)**2)**0.5
+        n_points =  int(min(50, max(4, 100/(len(control_points)-3) * (points_distance/(2*2**0.5))**0.5)))
         self.delta = [1/n_points, (1/n_points)**2, (1/n_points)**3]
         self.Ed = np.array([[0,0,0,1],
                             [self.delta[2], self.delta[1], self.delta[0], 0],

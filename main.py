@@ -366,13 +366,12 @@ class MainWindow(QMainWindow):
                     linhas , _ = objeto.render_to_view(valor_clip, limiar_points=[])
                     for linha in linhas:
                         if linha != []: qp.drawLine(*linha)
-                
-                continue
 
-            # Renderizacao de wireframes e curvas de bezier normais
-            linhas, limiares = objeto.render_to_view(valor_clip if type(objeto) == Wireframe else valor_clip_curva, limiar_points=[])
-            for linha in linhas:
-                qp.drawLine(*linha)
+            else:
+                # Renderizacao de wireframes e curvas de bezier normais
+                linhas, limiares = objeto.render_to_view(valor_clip if type(objeto) == Wireframe else valor_clip_curva, limiar_points=[])
+                for linha in linhas:
+                    qp.drawLine(*linha)
             
             # Calcula os limites que a window deveria ter para que todos os objetos coubessem na tela
             if nome != "window" and len(limiares) == 4:
