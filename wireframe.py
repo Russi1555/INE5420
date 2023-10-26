@@ -775,8 +775,91 @@ class Curved2D(Wireframe):
         self.window = window
         for curva in self.curvas:
             curva.update_window(window)
+
+class Ponto3D(Wireframe):
+    def __init__(self, coordenada):
+        self.coord_world = coordenada
     
+    def translade(self, dx: int, dy: int, dz : int):
+        x,y,z = self.coord_world
+        self.coord_world = (x+dx, y+dy, z+dz)
+
+    def stretch(self, dx,dy,dz):
+        x,y,z = self.coord_world
+        self.coord_world = (x*dx, y*dy, z*dz)
+
+    def rotate(self, ax = 0, ay = 0, az = 0):
+        x,y,z = self.coord_world
+        trans = [x,y,z,1]
+        if ax!=0:
+            ang_x = radians(ax)
+            Rx = [
+            [1, 0, 0, 0],
+            [0, cos(ang_x), sin(ang_x), 0],
+            [0, -sin(ang_x), cos(ang_x), 0],
+            [0, 0, 0, 1]
+            ]
+            trans = np.matmul(Rx,trans)
+        
+        if ay!=0:
+            ang_y = radians(ay)
+            Ry=[
+            [cos(ang_y),0,-sin(ang_y),0],
+            [0,1,0,0],
+            [sin(ang_y),0,cos(ang_y),0],
+            [0,0,0,1]
+            ]
+            trans = np.matmul(Ry,trans)
+
+        if az!=0:
+            ang_z = radians(az)
+            Rz =[
+                [cos(ang_z),sin(ang_z),0,0],
+                [-sin(ang_z),cos(ang_z),0,0],
+                [0,0,1,0],
+                [0,0,0,1]
+            ]
+            trans = np.matmul(Rz,trans)
+
+        
+        x,y,z,um = trans
+        self.coord_world = (x,y,z)
+
+
+
+class Objeto3D(Wireframe):
+    def __init__(self, label: str, coord_list: list[Ponto3D], color = QColor(255,0,0)) -> None:
+        super().__init__(label, coord_list, color, True)
+        self.coord_world = coord_list #+ [coord_list[0]]
+        #print(coord_list)
+
+    def translade(self, dx: int, dy: int, dz:int):
+        for ponto in self.coord_world:
+            ponto.translade(dx,dy, dz)
+
+    def stretch(self, dx: int, dy: int, dz: int):
+        for ponto in self.coord_world:
+            ponto.stretch(dx,dy,dz)
+
+        for ponto in self.coord_world:
+            print(ponto.coord_world)
+    
+    def rotate(self,ax=0,ay=0,az=0):
+        for ponto in self.coord_world:
+            ponto.rotate(ax,ay,az)
+
+        for ponto in self.coord_world:
+            print(ponto.coord_world)
+
+
+    
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    control_points = [(1,0), (3,3), (6,3), (8,1), (15,5), (6,6), (15,2)]
+    a =Ponto3D((10,10,10))
+    b = Ponto3D((30,30,30))
+    ha = Objeto3D("ha",[a,b])
+    print(ha.rotate(90))
+    exit()
     sys.exit(app.exec_())

@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
         Construtor, seta os elementos principais da janela.
         """
         super().__init__()
-        self.title = "Trabalho 1.1"
+        self.title = "Trabalho 1.7"
         self.setWindowTitle(self.title)
 
         self.top= 150
