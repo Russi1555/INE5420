@@ -189,7 +189,7 @@ class Wireframe:
                 ID = self.window.from_window_coords([(limiar_points[1], limiar_points[3])])[0]
                 limiar_points = [SE[0], ID[0], SE[1], ID[1]]
         if points is None: 
-            points = self.window.to_window_coords(self.coord_world)
+            points = self.window.ortogonal(self.coord_world)
         clip = self.clip_CS if clip_key==1 else self.clip_LB if clip_key==2 else lambda e:  e
         # Clipa todos os pontos linearizados
         lines = list(map(lambda line: clip(line), self.linearize(points)))
@@ -350,7 +350,8 @@ class ViewWindow(Wireframe):
 
     def points(self, _):
         return super().points(True)
-        
+
+
 class Wireframe_filled(Wireframe):
     def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0)) -> None:
         super().__init__(label, coord_list, color, True)
@@ -776,6 +777,8 @@ class Curved2D(Wireframe):
         for curva in self.curvas:
             curva.update_window(window)
 
+
+    
 class Ponto3D(Wireframe):
     def __init__(self, coordenada):
         self.coord_world = coordenada
@@ -828,7 +831,7 @@ class Ponto3D(Wireframe):
 
 
 class Objeto3D(Wireframe):
-    def __init__(self, label: str, coord_list: list[Ponto3D], color = QColor(255,0,0)) -> None:
+    def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0), closed = False) -> None:
         super().__init__(label, coord_list, color, True)
         self.coord_world = coord_list #+ [coord_list[0]]
         #print(coord_list)
@@ -837,7 +840,7 @@ class Objeto3D(Wireframe):
         for ponto in self.coord_world:
             ponto.translade(dx,dy, dz)
 
-    def stretch(self, dx: int, dy: int, dz: int):
+    def stretch(self, dx: int, dy: int, dz: int, center):
         for ponto in self.coord_world:
             ponto.stretch(dx,dy,dz)
 
@@ -851,8 +854,111 @@ class Objeto3D(Wireframe):
         for ponto in self.coord_world:
             print(ponto.coord_world)
 
+    
+class ViewWindow3D(Objeto3D):
+    def __init__(self, x0: float, y0: float, width: float, heigth: float) -> None:
+        self.SE = (x0, y0,0)
+        self.SD = (x0+width, y0,0)
+        self.ID = (x0+width, y0+heigth,0)
+        self.IE = (x0, y0+heigth,0)
+        self.width = width
+        self.heigth = heigth
+        self.angle_x = 0
+        self.angle_y = 0
+        self.angle_z = 0
+        super().__init__("window",[Ponto3D(self.SE), Ponto3D(self.SD), Ponto3D(self.ID), Ponto3D(self.IE)], QColor(0,0,0), True)
+        self.desloc = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[-self.center_point[0],-self.center_point[1],0,1]])
+        self.rot_x = [
+            [1, 0, 0, 0],
+            [0, cos(0), sin(0), 0],
+            [0, -sin(0), cos(0), 0],
+            [0, 0, 0, 1]
+            ]
+        
+        self.rot_y=[
+            [cos(0),0,-sin(0),0],
+            [0,1,0,0],
+            [sin(0),0,cos(0),0],
+            [0,0,0,1]
+            ]
+        
+        self.rot_z =[
+                [cos(0),sin(0),0,0],
+                [-sin(0),cos(0),0,0],
+                [0,0,1,0],
+                [0,0,0,1]
+            ]
+        self.stret = np.array([[2/(self.width),0,0,0],[0,2/(self.heigth),0,0],[0,0,1,0],[0,0,0,1]])    
+    
+    def to_window_coords(self, points: list):
+        points = list(map(lambda p: np.array((*p, 1)), points))
+        matrix = np.matmul(self.desloc, self.rot_x)
+        matrix = np.matmul(matrix, self.rot_y)
+        matrix = np.matmul(matrix, self.rot_z)
+        matrix = np.matmul(matrix, self.stret)
+        new_points = list(map(lambda vec: vec.dot(matrix), points))
+        new_points = list(map(lambda p: (p[0], p[1], p[2]), new_points))
+        return new_points
+    
+    def ortogonal(self, points: list):
+        points = list(map(lambda p: np.array((*p, 1)), points))
+        matrix = np.matmul(self.desloc, self.rot_x)
+        matrix = np.matmul(matrix, self.rot_y)
+        matrix = np.matmul(matrix, self.stret)
+        new_points = list(map(lambda vec: vec.dot(matrix), points))
+        new_points = list(map(lambda p: (p[0], p[1]), new_points))
+        print(new_points)
+        return new_points
+
+    def from_window_coords(self, points: list):
+        points = list(map(lambda p: np.array((*p, 1)), points))
+        matrix = np.matmul(np.linalg.inv(self.stret), np.linalg.inv(self.rot))
+        matrix = np.matmul(matrix, np.linalg.inv(self.desloc))
+        new_points = list(map(lambda vec: vec.dot(matrix), points))
+        new_points = list(map(lambda p: (p[0], p[1], p[2]), new_points))
+        return new_points
+
+    def translade(self, dx: int, dy: int, dz = 0):
+        theta = radians(self.angle)
+        ndx = dx * cos(theta) - dy * sin(theta)
+        ndy = dy * cos(theta) + dx * sin(theta)
+        ndz = dz * cos(theta) + dz * sin(theta)
+        super().translade(ndx, ndy, ndz)
+    
+    def stretch(self, x_factor: int, y_factor: int, z_factor, center: tuple[int] = (None, None)):
+        super().stretch(x_factor, y_factor, z_factor, center)
+        self.width *= x_factor
+        self.heigth *= y_factor
+        self.stret = np.array([[2/(self.width),0,0,0],[0,2/(self.heigth),0,0],[0,0,1,0],[0,0,0,1]])
+    
+    def rotate(self, angle: float):
+        super().rotate(angle)
+        angle = radians(angle)
+        self.angle_x -= angle
+        self.rot_x = [[1, 0, 0, 0],
+            [0, cos(angle), sin(angle), 0],
+            [0, -sin(angle), cos(angle), 0],
+            [0, 0, 0, 1]
+            ]
+        
+        self.rot_y=[
+            [cos(angle),0,-sin(angle),0],
+            [0,1,0,0],
+            [sin(angle),0,cos(angle),0],
+            [0,0,0,1]
+            ]
+        
+
+
 
     
+    
+    def transform(self, transform_list: list):
+        super().transform(transform_list)
+        self.desloc = np.array([[1,0,0],[0,1,0],[-self.center_point[0],-self.center_point[1],1]])
+
+    def points(self, _):
+        return super().points(True)
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(self.top, self.left, self.window_width, self.window_height)
 
         # transformacoes da window
-        self.viewer_window = ViewWindow(-49,-30,99,60)
+        self.viewer_window = ViewWindow3D(-49,-30,99,60)
         
         # transformation quantities
         self.tqt: float = 0 #translation
@@ -145,7 +145,7 @@ class MainWindow(QMainWindow):
         self.viewport = QtWidgets.QLabel()
         self.viewport.setGeometry(QtCore.QRect(200,10,990,600))
         self.viewer_window.update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
-        self.world_viewer = ViewWindow(-495,-300,990,600)
+        self.world_viewer = ViewWindow3D(-495,-300,990,600)
         self.world_viewer.update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
 
         self.lista_objetos = ListWidget(self)
@@ -182,6 +182,22 @@ class MainWindow(QMainWindow):
 
         # Botao de giro
         button("Ajustar aos Objetos", atx+410,aty+290,130,30, self.snap, ())
+        self.DDDtqt = line_edit(atx + 550, aty + 380, 30,30, def_value="1",text_width=1)
+        button("3D ↻ X", atx+550,aty+290,60,30, self.snap, ())
+        button("3D ↻ Y", atx+550,aty+320,60,30, self.snap, ())
+        button("3D ↻ Z", atx+550,aty+350,60,30, self.snap, ())
+
+        self.DDDsqt = line_edit(atx + 620, aty + 350, 30,30, def_value="1",text_width=1)
+        button("3D □", atx+620,aty+290,60,30, self.snap, ())
+        button("3D ▫", atx+620,aty+320,60,30, self.snap, ())
+
+        self.DDDrqt = line_edit(atx + 720, aty + 350, 30,30, def_value="1",text_width=1)
+        button("↑", atx+720,aty+290,30,30, self.translacao, ("cim",))
+        button("←", atx+690,aty+300,30,30, self.translacao, ("esq",))
+        button("→", atx+750,aty+300,30,30, self.translacao, ("dir",))
+        button("↓", atx+720,aty+320,30,30, self.translacao, ("bax",))
+
+        
 
         # Centro de transformação
         self.center_x = line_edit(atx, aty + 175, 30, 30, text="X", text_width=15)
@@ -274,7 +290,7 @@ class MainWindow(QMainWindow):
         value = 1 if self.sqt.text() == '' else float(self.sqt.text()) ** tipo
         algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
         if not algum_selecionado:
-            self.viewer_window.stretch(value, value)
+            self.viewer_window.stretch(value, value,0)
         else:
             for objeto in self.objetos.values():
                 if not objeto.selecionado: continue
