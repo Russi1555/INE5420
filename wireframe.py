@@ -192,12 +192,12 @@ class Wireframe:
             points = self.window.ortogonal(self.coord_world)
         clip = self.clip_CS if clip_key==1 else self.clip_LB if clip_key==2 else lambda e:  e
         # Clipa todos os pontos linearizados
+
         lines = list(map(lambda line: clip(line), self.linearize(points)))
         # Filtra linhas nulas
         lines = list(filter(lambda line: line is not None and line[0] is not None and line[1] is not None, lines))
         # Transforma as linhas em objetos renderizaveis
         lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), lines))
-        
         return lines, limiar_points
 
     ######### METODOS DE TRANSFORMACAO ########
@@ -833,10 +833,11 @@ class Ponto3D(Wireframe):
 class Objeto3D(Wireframe):
     def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0), closed = False) -> None:
         super().__init__(label, coord_list, color, True)
-        self.coord_world = coord_list #+ [coord_list[0]]
+        self.coord_world = [Ponto3D(p) for p in coord_list] #+ [coord_list[0]]
         #print(coord_list)
 
     def translade(self, dx: int, dy: int, dz:int):
+        print(self.coord_world)
         for ponto in self.coord_world:
             ponto.translade(dx,dy, dz)
 
@@ -898,6 +899,7 @@ class ViewWindow3D(Objeto3D):
         matrix = np.matmul(matrix, self.stret)
         new_points = list(map(lambda vec: vec.dot(matrix), points))
         new_points = list(map(lambda p: (p[0], p[1], p[2]), new_points))
+        print(new_points)
         return new_points
     
     def ortogonal(self, points: list):

@@ -56,6 +56,18 @@ class MainWindow(QMainWindow):
         except ValueError:
             return (None, None)
     
+    @property
+    def rotation_axis(self):
+        """
+        Getter do eixo de rotacao
+        """
+        try:
+            return [[float(self.axisAx.text()), float(self.axisAy.text()), float(self.axisAz.text())],
+                    [float(self.axisBx.text()), float(self.axisBy.text()), float(self.axisBz.text())],
+            ]
+        except ValueError:
+            return ((None, None, None), (None, None, None))
+
     def UiComponents(self):
         """
         Inicia os componentes padroes da janela principal.
@@ -170,6 +182,8 @@ class MainWindow(QMainWindow):
         button("←", atx,aty+15,30,30, self.translacao, ("esq",))
         button("→", atx+60,aty+15,30,30, self.translacao, ("dir",))
         button("↓", atx+30,aty+30,30,30, self.translacao, ("bax",))
+        button("↗", atx+60,aty-6,20,20, self.translacao, ("trz",))
+        button("↙", atx+10,aty+45,20,20, self.translacao, ("frn",))
 
         # Botao de estica e encolhe
         self.sqt = line_edit(atx + 100, aty + 75, 30,30, def_value="1.5", text_width=1)
@@ -179,6 +193,13 @@ class MainWindow(QMainWindow):
         # Botao de giro
         self.rqt = line_edit(atx + 100, aty + 120, 30, 30, def_value="45", text_width=1)
         button("↻", atx+30,aty+120,30,30, self.girar, ())
+        self.axisAx = line_edit(atx-40, aty + 160, 30,30, text_width=1)
+        self.axisAy = line_edit(atx-10, aty + 160, 30,30, text_width=1)
+        self.axisAz = line_edit(atx+20, aty + 160, 30,30, text_width=1)
+
+        self.axisBx = line_edit(atx+60, aty + 160, 30,30, text_width=1)
+        self.axisBy = line_edit(atx+90, aty + 160, 30,30, text_width=1)
+        self.axisBz = line_edit(atx+120, aty + 160, 30,30, text_width=1)
 
         # Botao de giro
         button("Ajustar aos Objetos", atx+410,aty+290,130,30, self.snap, ())
@@ -200,11 +221,11 @@ class MainWindow(QMainWindow):
         
 
         # Centro de transformação
-        self.center_x = line_edit(atx, aty + 175, 30, 30, text="X", text_width=15)
-        self.center_y = line_edit(atx + 60, aty + 175, 30, 30, text="Y", text_width=15)
+        self.center_x = line_edit(atx, aty + 195, 30, 30, text="X", text_width=15)
+        self.center_y = line_edit(atx + 60, aty + 195, 30, 30, text="Y", text_width=15)
 
         # Checkbox de visao de mundo
-        self.world_view_check_box = check_box(atx + 105, aty + 225, 15,15, "Visao de Mundo", 105)
+        self.world_view_check_box = check_box(atx + 105, aty + 235, 15,15, "Visao de Mundo", 105)
 
         # Slider de Clipping
         self.slider_clip = slider(1, 3, 1, atx - 50, aty + 270, 105, 60)
@@ -268,7 +289,10 @@ class MainWindow(QMainWindow):
         """
         tqt = 0 if self.tqt.text() == '' else float(self.tqt.text())
 
-        args = (tqt if dir == "dir" else -tqt if dir == "esq" else 0, tqt if dir == "bax" else -tqt if dir == "cim" else 0)
+        args = (tqt if dir == "dir" else -tqt if dir == "esq" else 0, 
+                tqt if dir == "bax" else -tqt if dir == "cim" else 0,
+                tqt if dir == "frn" else -tqt if dir == "trz" else 0,
+                )
 
         algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
         if not algum_selecionado:
@@ -294,7 +318,7 @@ class MainWindow(QMainWindow):
         else:
             for objeto in self.objetos.values():
                 if not objeto.selecionado: continue
-                objeto.stretch(value, value, self.center_point)
+                objeto.stretch(value, value, value, self.center_point)
         self.update()
     
     def girar(self):
@@ -353,6 +377,13 @@ class MainWindow(QMainWindow):
             center_in_view = (self.viewport.x() + ((cx+1)*self.viewport.width()/2), self.viewport.y() + (cy+1)*(self.viewport.height()/2))
             qp.drawPoint(QtCore.QPointF(*center_in_view))
             self.update()
+        
+        # Renderiza o eixo de rotacoes quando necessario
+        if None not in self.rotation_axis[0] and None not in self.rotation_axis[1]:
+            self.objetos["eixo"] = Objeto3D("axis", self.rotation_axis, Qt.black)
+            self.objetos["eixo"].update_window(self.viewer_window)
+            self.objetos["eixo"].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
+            self.update()
 
         # Inclui a window como um objeto a ser renderizado caso nao estejamos vendo o mundo de sua perspectiva
         objetos = {} if not world_view else {"window": self.viewer_window}
@@ -386,11 +417,12 @@ class MainWindow(QMainWindow):
             else:
                 # Renderizacao de wireframes e curvas de bezier normais
                 linhas, limiares = objeto.render_to_view(valor_clip if type(objeto) == Wireframe else valor_clip_curva, limiar_points=[])
+                print(linhas)
                 for linha in linhas:
                     qp.drawLine(*linha)
             
             # Calcula os limites que a window deveria ter para que todos os objetos coubessem na tela
-            if nome != "window" and len(limiares) == 4:
+            if nome not in {"window", "eixo"} and len(limiares) == 4:
                 # print(limiares)
                 self.limiares[0] = min(self.limiares[0], limiares[0])
                 self.limiares[1] = max(self.limiares[1], limiares[1])
