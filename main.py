@@ -204,19 +204,9 @@ class MainWindow(QMainWindow):
         # Botao de giro
         button("Ajustar aos Objetos", atx+410,aty+290,130,30, self.snap, ())
         self.DDDtqt = line_edit(atx + 550, aty + 380, 30,30, def_value="1",text_width=1)
-        button("3D ↻ X", atx+550,aty+290,60,30, self.snap, ())
-        button("3D ↻ Y", atx+550,aty+320,60,30, self.snap, ())
-        button("3D ↻ Z", atx+550,aty+350,60,30, self.snap, ())
-
-        self.DDDsqt = line_edit(atx + 620, aty + 350, 30,30, def_value="1",text_width=1)
-        button("3D □", atx+620,aty+290,60,30, self.snap, ())
-        button("3D ▫", atx+620,aty+320,60,30, self.snap, ())
-
-        self.DDDrqt = line_edit(atx + 720, aty + 350, 30,30, def_value="1",text_width=1)
-        button("↑", atx+720,aty+290,30,30, self.translacao, ("cim",))
-        button("←", atx+690,aty+300,30,30, self.translacao, ("esq",))
-        button("→", atx+750,aty+300,30,30, self.translacao, ("dir",))
-        button("↓", atx+720,aty+320,30,30, self.translacao, ("bax",))
+        button("3D ↻ X", atx+550,aty+290,60,30, self.girar_x3D, ())
+        button("3D ↻ Y", atx+550,aty+320,60,30, self.girar_y3D, ())
+        button("3D ↻ Z", atx+550,aty+350,60,30, self.girar_z3D, ())
 
         
 
@@ -336,7 +326,45 @@ class MainWindow(QMainWindow):
         else:
             for objeto in self.objetos.values():
                 if not objeto.selecionado: continue
-                objeto.rotate(angle, self.center_point)
+                else:
+                    if isinstance(objeto, Objeto3D):
+                        print("OBJETO SELECIONADO DEVE SER ROTACIONADO COM FUNCOES 3D OU ROTACIONAR A JANELA SEM NADA SELECIONADO")
+                    else:
+                        objeto.rotate(angle, self.center_point)
+
+        self.update()
+
+    def girar_x3D(self):
+        angle = 0 if self.DDDtqt.text() == '' else -float(self.DDDtqt.text())
+        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
+        if not algum_selecionado:
+            self.viewer_window.rotate(angle)
+        else:
+            for objeto in self.objetos.values():
+                if not objeto.selecionado: continue
+                objeto.rotate(angle, 0, 0)
+        self.update()
+    
+    def girar_y3D(self):
+        angle = 0 if self.DDDtqt.text() == '' else -float(self.DDDtqt.text())
+        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
+        if not algum_selecionado:
+            self.viewer_window.rotate(angle)
+        else:
+            for objeto in self.objetos.values():
+                if not objeto.selecionado: continue
+                objeto.rotate(0, angle, 0)
+        self.update()
+    
+    def girar_z3D(self):
+        angle = 0 if self.DDDtqt.text() == '' else -float(self.DDDtqt.text())
+        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
+        if not algum_selecionado:
+            self.viewer_window.rotate(angle)
+        else:
+            for objeto in self.objetos.values():
+                if not objeto.selecionado: continue
+                objeto.rotate(0, 0, angle)
         self.update()
 
     def snap(self):

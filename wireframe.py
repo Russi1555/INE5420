@@ -921,10 +921,13 @@ class ViewWindow3D(Objeto3D):
         return new_points
 
     def translade(self, dx: int, dy: int, dz = 0):
-        theta = radians(self.angle)
-        ndx = dx * cos(theta) - dy * sin(theta)
-        ndy = dy * cos(theta) + dx * sin(theta)
-        ndz = dz * cos(theta) + dz * sin(theta)
+        theta_X = radians(self.angle_x)
+        theta_Y = radians(self.angle_y)
+        theta_Z = radians(self.angle_z)
+
+        ndx = dx * cos(theta_X) - dy * sin(theta_Y)
+        ndy = dy * cos(theta_Y) + dx * sin(theta_X)
+        ndz = dz * cos(theta_Z) + dz * sin(theta_Z)
         super().translade(ndx, ndy, ndz)
     
     def stretch(self, x_factor: int, y_factor: int, z_factor, center: tuple[int] = (None, None)):
