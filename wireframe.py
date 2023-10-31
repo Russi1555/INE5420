@@ -807,7 +807,7 @@ class Objeto3D(Wireframe):
         for ponto in self.coord_world:
             ponto.translade(dx,dy, dz)
 
-    def stretch(self, dx: int, dy: int, dz: int, center):
+    def stretch(self, dx: int, dy: int, dz: int):
         for ponto in self.coord_world:
             ponto.stretch(dx,dy,dz)
 

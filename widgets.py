@@ -62,7 +62,9 @@ class WindowInput(QMainWindow):
         self.coords.setObjectName("Coordenadas")       
 
         self.chose_object = QComboBox(self.centralwidget)
-        self.chose_object.addItems({"Open Wireframe": "Open Wireframe", "Closed Wireframe": "Closed Wireframe", "Polygon": "Polygon", "Curved2D": "Curved2D", "BSpline": "BSpline", "Objeto3D":"Objeto3D"})
+        # self.chose_object.addItems({"Open Wireframe": "Open Wireframe", "Closed Wireframe": "Closed Wireframe", "Polygon": "Polygon", "Curved2D": "Curved2D", "BSpline": "BSpline", "Objeto3D":"Objeto3D"})
+        self.chose_object.addItems({"Objeto3D":"Objeto3D"})
+
         self.chose_object.setGeometry(130, 130, 155, 30)
 
         # Botao de criar objeto
@@ -80,7 +82,8 @@ class WindowInput(QMainWindow):
         '''
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
-        type_map = {"BSpline": BSpline, "Polygon": Wireframe_filled, "Curved2D": Curved2D, "Closed Wireframe": Wireframe, "Open Wireframe": Wireframe, "Objeto3D":Objeto3D}
+        # type_map = {"BSpline": BSpline, "Polygon": Wireframe_filled, "Curved2D": Curved2D, "Closed Wireframe": Wireframe, "Open Wireframe": Wireframe, "Objeto3D":Objeto3D}
+        type_map = {"Wireframe 3D": Objeto3D}
         object_type = type_map[self.chose_object.currentText()]
         self.submitClicked.emit((self.nome.text(), self.coords.text(), [self.r.text(),self.g.text(),self.b.text()], object_type, self.chose_object.currentText() == "Closed Wireframe"))
         self.close()

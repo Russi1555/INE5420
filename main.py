@@ -210,29 +210,30 @@ class MainWindow(QMainWindow):
         # Botao de giro
         self.rqt = line_edit(atx + 100, aty + 120, 30, 30, def_value="15", text_width=1)
         button("↻", atx+30,aty+120,30,30, self.girar, ())
-        self.axisAx = line_edit(atx-40, aty + 160, 30,30, text_width=1, def_value="-10")
-        self.axisAy = line_edit(atx-10, aty + 160, 30,30, text_width=1, def_value="0")
-        self.axisAz = line_edit(atx+20, aty + 160, 30,30, text_width=1, def_value="0")
+        self.axisAx = line_edit(atx+10, aty + 170, 30,30, text_width=1, def_value="-10")
+        self.axisAy = line_edit(atx+40, aty + 170, 30,30, text_width=1, def_value="0")
+        self.axisAz = line_edit(atx+70, aty + 170, 30,30, text_width=1, def_value="0")
 
-        self.axisBx = line_edit(atx+60, aty + 160, 30,30, text_width=1, def_value="-10")
-        self.axisBy = line_edit(atx+90, aty + 160, 30,30, text_width=1, def_value="10")
-        self.axisBz = line_edit(atx+120, aty + 160, 30,30, text_width=1, def_value="0")
+        self.axisBx = line_edit(atx+10, aty + 220, 30,30, text_width=1, def_value="-10")
+        self.axisBy = line_edit(atx+40, aty + 220, 30,30, text_width=1, def_value="10")
+        self.axisBz = line_edit(atx+70, aty + 220, 30,30, text_width=1, def_value="0")
+        label = QtWidgets.QLabel(self)
+        label.setGeometry(atx-25, aty+170, 40, 30)
+        label.setText(f"Eixo:")
 
         # Botao de giro
         button("Ajustar aos Objetos", atx+410,aty+290,130,30, self.snap, ())
-        self.DDDtqt = line_edit(atx + 550, aty + 380, 30,30, def_value="1",text_width=1)
-        button("3D ↻ X", atx+550,aty+290,60,30, self.girar_x3D, ())
-        button("3D ↻ Y", atx+550,aty+320,60,30, self.girar_y3D, ())
-        button("3D ↻ Z", atx+550,aty+350,60,30, self.girar_z3D, ())
-
-        
+        self.DDDtqt = line_edit(atx + 365, aty + 290, 30,30, def_value="1",text_width=1)
+        button("3D ↻ X", atx+155,aty+290,60,30, self.girar_x3D, ())
+        button("3D ↻ Y", atx+225,aty+290,60,30, self.girar_y3D, ())
+        button("3D ↻ Z", atx+295,aty+290,60,30, self.girar_z3D, ())
 
         # Centro de transformação
-        self.center_x = line_edit(atx, aty + 195, 30, 30, text="X", text_width=15)
-        self.center_y = line_edit(atx + 60, aty + 195, 30, 30, text="Y", text_width=15)
+        # self.center_x = line_edit(atx, aty + 195, 30, 30, text="X", text_width=15)
+        # self.center_y = line_edit(atx + 60, aty + 195, 30, 30, text="Y", text_width=15)
 
         # Checkbox de visao de mundo
-        self.world_view_check_box = check_box(atx + 105, aty + 235, 15,15, "Visao de Mundo", 105)
+        # self.world_view_check_box = check_box(atx + 105, aty + 235, 15,15, "Visao de Mundo", 105)
 
         # Slider de Clipping
         self.slider_clip = slider(1, 3, 1, atx - 50, aty + 270, 105, 60)
@@ -249,18 +250,18 @@ class MainWindow(QMainWindow):
         self.slider_label_1.setGeometry(atx + 40, aty + 265, 145, 20)
 
         # Slider de Clipping curvas
-        self.slider_clip_curvas = slider(1, 3, 1, atx + 170, aty + 270, 105, 60)
-        self.slider_label_1 = QtWidgets.QLabel(self)
-        self.slider_label_1.setText("Completo")
-        self.slider_label_1.setGeometry(atx + 240, aty + 312, 145, 20)
+        # self.slider_clip_curvas = slider(1, 3, 1, atx + 170, aty + 270, 105, 60)
+        # self.slider_label_1 = QtWidgets.QLabel(self)
+        # self.slider_label_1.setText("Completo")
+        # self.slider_label_1.setGeometry(atx + 240, aty + 312, 145, 20)
 
-        self.slider_label_1 = QtWidgets.QLabel(self)
-        self.slider_label_1.setText("Parcial")
-        self.slider_label_1.setGeometry(atx + 240, aty + 288, 145, 20)
+        # self.slider_label_1 = QtWidgets.QLabel(self)
+        # self.slider_label_1.setText("Parcial")
+        # self.slider_label_1.setGeometry(atx + 240, aty + 288, 145, 20)
 
-        self.slider_label_1 = QtWidgets.QLabel(self)
-        self.slider_label_1.setText("Sem clipping de curvas")
-        self.slider_label_1.setGeometry(atx + 240, aty + 265, 145, 20)
+        # self.slider_label_1 = QtWidgets.QLabel(self)
+        # self.slider_label_1.setText("Sem clipping de curvas")
+        # self.slider_label_1.setGeometry(atx + 240, aty + 265, 145, 20)
 
         self.update()
 
@@ -325,7 +326,7 @@ class MainWindow(QMainWindow):
         else:
             for objeto in self.objetos.values():
                 if not objeto.selecionado: continue
-                objeto.stretch(value, value, value, self.center_point)
+                objeto.stretch(value, value, value)
         self.update()
     
     def girar_(self):
@@ -353,9 +354,7 @@ class MainWindow(QMainWindow):
 
     def rotation_matrix(self, angle):
         eixo = self.rotation_axis
-        print(eixo)
         head = np.array(eixo[1]+[1])
-        print("original:",head)
         step_1 = np.array([[1,0,0,0],
                             [0,1,0,0],
                             [0,0,1,0],
@@ -404,9 +403,7 @@ class MainWindow(QMainWindow):
         algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
         matrix = self.rotation_matrix(radians(float(self.rqt.text())))
         
-        if not algum_selecionado:
-            self.viewer_window.rotate(matrix)
-        else:
+        if algum_selecionado:
             for objeto in self.objetos.values():
                 if not objeto.selecionado: continue
                 objeto.rotate(matrix)
@@ -472,17 +469,19 @@ class MainWindow(QMainWindow):
         
         # Le as checkbox da interface
         valor_clip = int(self.slider_clip.value())
-        valor_clip_curva = int(self.slider_clip_curvas.value())
-        world_view: bool = int(self.world_view_check_box.checkState()) == 2
+        # valor_clip_curva = int(self.slider_clip_curvas.value())
+        valor_clip_curva = 1
+        # world_view: bool = int(self.world_view_check_box.checkState()) == 2
+        world_view = False
         used_window = self.world_viewer if world_view else self.viewer_window
         
         # Renderiza o centro de transformacoes quando necessario
-        if None not in self.center_point:
-            qp.setPen(QtGui.QPen(Qt.black, 4))
-            cx, cy = used_window.to_window_coords([self.center_point])[0]
-            center_in_view = (self.viewport.x() + ((cx+1)*self.viewport.width()/2), self.viewport.y() + (cy+1)*(self.viewport.height()/2))
-            qp.drawPoint(QtCore.QPointF(*center_in_view))
-            self.update()
+        # if None not in self.center_point:
+        #     qp.setPen(QtGui.QPen(Qt.black, 4))
+        #     cx, cy = used_window.to_window_coords([self.center_point])[0]
+        #     center_in_view = (self.viewport.x() + ((cx+1)*self.viewport.width()/2), self.viewport.y() + (cy+1)*(self.viewport.height()/2))
+        #     qp.drawPoint(QtCore.QPointF(*center_in_view))
+        #     self.update()
         
         for obj in self.default_objects:
             obj.update_window(self.viewer_window)
