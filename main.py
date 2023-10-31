@@ -13,7 +13,12 @@ def angle_between_vec(v1, v2):
     dot_product = np.dot(v1, v2)
     magnitude1 = np.linalg.norm(v1)
     magnitude2 = np.linalg.norm(v2)
-    cosine_theta = dot_product / (magnitude1 * magnitude2)
+    print(magnitude1)
+    print("mag 2:" + str(magnitude2))
+    if magnitude2 == 0 or magnitude1 == 0:
+        cosine_theta = 1
+    else:
+        cosine_theta = dot_product / (magnitude1 * magnitude2)
     angle_in_radians = np.arccos(cosine_theta)
     return angle_in_radians
 
@@ -355,7 +360,9 @@ class MainWindow(QMainWindow):
     def rotation_matrix(self, angle, eixo = None):
         if eixo is None:
             eixo = self.rotation_axis
+        print(eixo)
         head = np.array(eixo[1]+[1])
+        print(head)
         step_1 = np.array([[1,0,0,0],
                             [0,1,0,0],
                             [0,0,1,0],
@@ -399,10 +406,9 @@ class MainWindow(QMainWindow):
 
         return reduce(np.matmul, [step_1, step_2, step_3, step_4, step_5, step_6, step_7])
 
-    def girar(self):
-        
+    def girar(self, eixo = None):
         algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
-        matrix = self.rotation_matrix(radians(float(self.rqt.text())))
+        matrix = self.rotation_matrix(radians(float(self.rqt.text())),eixo)
         
         if algum_selecionado:
             for objeto in self.objetos.values():
@@ -410,34 +416,14 @@ class MainWindow(QMainWindow):
                 objeto.rotate(matrix)
         self.update()
 
-    def girar_x3D(self, word_axis = False):
-        angle = 0 -float(self.DDDtqt.text())
-        # if word_axis:
-
-        self.viewer_window.rotate(rotation_matrix)
-        self.update()
+    def girar_x3D(self):
+        self.girar([[0,0,0],[1,0,0]])
     
     def girar_y3D(self):
-        angle = 0 if self.DDDtqt.text() == '' else -float(self.DDDtqt.text())
-        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
-        if not algum_selecionado:
-            self.viewer_window.rotate(angle)
-        else:
-            for objeto in self.objetos.values():
-                if not objeto.selecionado: continue
-                objeto.rotate(0, angle, 0)
-        self.update()
+        self.girar([[0,0,0],[0,1,0]])
     
     def girar_z3D(self):
-        angle = 0 if self.DDDtqt.text() == '' else -float(self.DDDtqt.text())
-        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
-        if not algum_selecionado:
-            self.viewer_window.rotate(angle)
-        else:
-            for objeto in self.objetos.values():
-                if not objeto.selecionado: continue
-                objeto.rotate(0, 0, angle)
-        self.update()
+        self.girar([[0,0,0],[0,0,1]])
 
     def snap(self):
         wx, wy = self.viewer_window.coord_world[0][0], self.viewer_window.coord_world[0][1]
