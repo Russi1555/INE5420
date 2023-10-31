@@ -28,6 +28,11 @@ class MainWindow(QMainWindow):
 
         # transformacoes da window
         self.viewer_window = ViewWindow3D(-49,-30,99,60)
+        muito = 10000000
+        self.yaxis = Objeto3D("y", [(0,muito,0),(0,-muito,0)], QColor(0,255,0))
+        self.xaxis = Objeto3D("x", [(muito,0,0),(-muito,0,0)], QColor(255,0,0))
+        self.zaxis = Objeto3D("z", [(0, 0,muito),(0,0,-muito)], QColor(0,0,255))
+        self.default_objects = [self.yaxis, self.xaxis, self.zaxis]
         
         # transformation quantities
         self.tqt: float = 0 #translation
@@ -406,6 +411,10 @@ class MainWindow(QMainWindow):
             qp.drawPoint(QtCore.QPointF(*center_in_view))
             self.update()
         
+        for obj in self.default_objects:
+            obj.update_window(self.viewer_window)
+            obj.update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())
+        
         # Renderiza o eixo de rotacoes quando necessario
         if None not in self.rotation_axis[0] and None not in self.rotation_axis[1]:
             self.objetos["eixo"] = Objeto3D("axis", self.rotation_axis, Qt.black)
@@ -416,6 +425,9 @@ class MainWindow(QMainWindow):
         # Inclui a window como um objeto a ser renderizado caso nao estejamos vendo o mundo de sua perspectiva
         objetos = {} if not world_view else {"window": self.viewer_window}
         objetos.update(self.objetos)
+        objetos["x"] = self.xaxis
+        objetos["y"] = self.yaxis
+        objetos["z"] = self.zaxis
         
         # Itera sobre os Wireframes renderizando-os        
         self.limiares = [10000000, -10000000, 10000000, -1000000]
@@ -425,8 +437,8 @@ class MainWindow(QMainWindow):
             
             # Determina qual a cor e grossura da caneta
             if nome == "window": qp.setPen(QtGui.QPen(Qt.black,2))
-            elif self.objetos[nome].selecionado: qp.setPen(QtGui.QPen(self.objetos[nome].color,4))
-            else: qp.setPen(QtGui.QPen(self.objetos[nome].color,1))
+            elif objeto.selecionado: qp.setPen(QtGui.QPen(objeto.color,4))
+            else: qp.setPen(QtGui.QPen(objeto.color,1))
             
             # Wireframe_filled/Polygon precisa ter outra rotina de renderizacao por ser preenchido
             if type(objeto) == Wireframe_filled:
@@ -445,7 +457,7 @@ class MainWindow(QMainWindow):
             else:
                 # Renderizacao de wireframes e curvas de bezier normais
                 linhas, limiares = objeto.render_to_view(valor_clip if type(objeto) == Wireframe else valor_clip_curva, limiar_points=[])
-                print(linhas)
+                # print(linhas)
                 for linha in linhas:
                     qp.drawLine(*linha)
             
@@ -456,6 +468,8 @@ class MainWindow(QMainWindow):
                 self.limiares[1] = max(self.limiares[1], limiares[1])
                 self.limiares[2] = min(self.limiares[2], limiares[2])
                 self.limiares[3] = max(self.limiares[3], limiares[3])
+        
+        print(self.viewer_window.center_point)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

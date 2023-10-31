@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 import numpy as np
 import sys
 from math import sin, cos, radians
+from functools import reduce
 
 class Wireframe:
     def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0), closed = False) -> None:
@@ -350,7 +351,6 @@ class ViewWindow(Wireframe):
 
     def points(self, _):
         return super().points(True)
-
 
 class Wireframe_filled(Wireframe):
     def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0)) -> None:
@@ -776,9 +776,7 @@ class Curved2D(Wireframe):
         self.window = window
         for curva in self.curvas:
             curva.update_window(window)
-
-
-    
+ 
 class Ponto3D(Wireframe):
     def __init__(self, coordenada):
         self.coord_world = coordenada
@@ -828,16 +826,14 @@ class Ponto3D(Wireframe):
         x,y,z,um = trans
         self.coord_world = (x,y,z)
 
-
-
 class Objeto3D(Wireframe):
-    def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0), closed = False) -> None:
+    def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0)) -> None:
         super().__init__(label, coord_list, color, True)
         self.coord_world = [Ponto3D(p) for p in coord_list] #+ [coord_list[0]]
         #print(coord_list)
 
     def translade(self, dx: int, dy: int, dz:int):
-        print(self.coord_world)
+        # print(self.coord_world)
         for ponto in self.coord_world:
             ponto.translade(dx,dy, dz)
 
@@ -845,29 +841,24 @@ class Objeto3D(Wireframe):
         for ponto in self.coord_world:
             ponto.stretch(dx,dy,dz)
 
-        for ponto in self.coord_world:
-            print(ponto.coord_world)
+        # for ponto in self.coord_world:
+        #     print(ponto.coord_world)
     
     def rotate(self,ax=0,ay=0,az=0):
         for ponto in self.coord_world:
             ponto.rotate(ax,ay,az)
 
-        for ponto in self.coord_world:
-            print(ponto.coord_world)
-
+        # for ponto in self.coord_world:
+        #     print(ponto.coord_world)
     
 class ViewWindow3D(Objeto3D):
     def __init__(self, x0: float, y0: float, width: float, heigth: float) -> None:
-        self.SE = (x0, y0,0)
-        self.SD = (x0+width, y0,0)
-        self.ID = (x0+width, y0+heigth,0)
-        self.IE = (x0, y0+heigth,0)
-        self.width = width
-        self.heigth = heigth
-        self.angle_x = 0
-        self.angle_y = 0
-        self.angle_z = 0
-        super().__init__("window",[Ponto3D(self.SE), Ponto3D(self.SD), Ponto3D(self.ID), Ponto3D(self.IE)], QColor(0,0,0), True)
+        self.SE, self.SD, self.ID, self.IE = (x0, y0,0), (x0+width, y0,0), (x0+width, y0+heigth,0), (x0, y0+heigth,0)
+        self.width, self.heigth = width, heigth
+        self.angle_x, self.angle_y, self.angle_z = 0, 0, 0
+        self.angle = 0
+        super().__init__("window",[Ponto3D(self.SE), Ponto3D(self.SD), Ponto3D(self.ID), Ponto3D(self.IE)], QColor(0,0,0))
+        self.center_point = [sum(map(lambda e: e[i],self.coord_world))/len(self.coord_world) for i in range(3)]
         self.desloc = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[-self.center_point[0],-self.center_point[1],0,1]])
         self.rot_x = [
             [1, 0, 0, 0],
@@ -893,23 +884,18 @@ class ViewWindow3D(Objeto3D):
     
     def to_window_coords(self, points: list):
         points = list(map(lambda p: np.array((*p, 1)), points))
-        matrix = np.matmul(self.desloc, self.rot_x)
-        matrix = np.matmul(matrix, self.rot_y)
-        matrix = np.matmul(matrix, self.rot_z)
-        matrix = np.matmul(matrix, self.stret)
+        matrix = reduce(np.matmul, [self.desloc, self.rot_x, self.rot_y, self.rot_z, self.stret])
         new_points = list(map(lambda vec: vec.dot(matrix), points))
         new_points = list(map(lambda p: (p[0], p[1], p[2]), new_points))
-        print(new_points)
+        # print(new_points)
         return new_points
     
     def ortogonal(self, points: list):
         points = list(map(lambda p: np.array((*p, 1)), points))
-        matrix = np.matmul(self.desloc, self.rot_x)
-        matrix = np.matmul(matrix, self.rot_y)
-        matrix = np.matmul(matrix, self.stret)
+        matrix = reduce(np.matmul, [self.desloc, self.rot_x, self.rot_y, self.rot_z, self.stret])
         new_points = list(map(lambda vec: vec.dot(matrix), points))
         new_points = list(map(lambda p: (p[0], p[1]), new_points))
-        print(new_points)
+        # print(new_points)
         return new_points
 
     def from_window_coords(self, points: list):
@@ -929,6 +915,7 @@ class ViewWindow3D(Objeto3D):
         ndy = dy * cos(theta_Y) + dx * sin(theta_X)
         ndz = dz * cos(theta_Z) + dz * sin(theta_Z)
         super().translade(ndx, ndy, ndz)
+        self.center_point = [sum(map(lambda e: e[i],self.coord_world))/len(self.coord_world) for i in range(3)]
     
     def stretch(self, x_factor: int, y_factor: int, z_factor, center: tuple[int] = (None, None)):
         super().stretch(x_factor, y_factor, z_factor, center)
@@ -940,22 +927,19 @@ class ViewWindow3D(Objeto3D):
         super().rotate(angle)
         angle = radians(angle)
         self.angle_x -= angle
+        self.angle += angle
         self.rot_x = [[1, 0, 0, 0],
-            [0, cos(angle), sin(angle), 0],
-            [0, -sin(angle), cos(angle), 0],
+            [0, cos(self.angle), sin(self.angle), 0],
+            [0, -sin(self.angle), cos(self.angle), 0],
             [0, 0, 0, 1]
             ]
         
         self.rot_y=[
-            [cos(angle),0,-sin(angle),0],
+            [cos(self.angle),0,-sin(self.angle),0],
             [0,1,0,0],
-            [sin(angle),0,cos(angle),0],
+            [sin(self.angle),0,cos(self.angle),0],
             [0,0,0,1]
             ]
-        
-
-
-
     
     
     def transform(self, transform_list: list):
