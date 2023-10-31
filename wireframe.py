@@ -893,23 +893,26 @@ class ViewWindow3D(Objeto3D):
         self.heigth *= y_factor
         self.stret = np.array([[2/(self.width),0,0,0],[0,2/(self.heigth),0,0],[0,0,1,0],[0,0,0,1]])
     
-    def rotate(self, rotation_matrix):
-        super().rotate(rotation_matrix)
+    def rotate(self, angle, r_x = True, r_y = True):
+        #super().rotate(rotation_matrix)
         angle = radians(angle)
-        self.angle_x -= angle
-        self.angle += angle
-        self.rot_x = [[1, 0, 0, 0],
-            [0, cos(angle), sin(angle), 0],
-            [0, -sin(angle), cos(angle), 0],
-            [0, 0, 0, 1]
-            ]
+        if r_x:
+            self.angle_x -= angle
+            self.rot_x = [[1, 0, 0, 0],
+                [0, cos(self.angle_x), sin(self.angle_x), 0],
+                [0, -sin(self.angle_x), cos(self.angle_x), 0],
+                [0, 0, 0, 1]
+                ]
         
-        self.rot_y=[
-            [cos(angle),0,-sin(angle),0],
-            [0,1,0,0],
-            [sin(angle),0,cos(angle),0],
-            [0,0,0,1]
-            ]
+        if r_y:
+            self.angle_y -= angle
+            self.rot_y=[
+                [cos(self.angle_y),0,-sin(self.angle_y),0],
+                [0,1,0,0],
+                [sin(self.angle_y),0,cos(self.angle_y),0],
+                [0,0,0,1]
+                ]
+
     
     def transform(self, transform_list: list):
         super().transform(transform_list)

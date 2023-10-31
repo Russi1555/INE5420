@@ -406,7 +406,7 @@ class MainWindow(QMainWindow):
 
         return reduce(np.matmul, [step_1, step_2, step_3, step_4, step_5, step_6, step_7])
 
-    def girar(self, eixo = None):
+    def girar(self, eixo = None, rot_x = True, rot_y = True):
         algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
         matrix = self.rotation_matrix(radians(float(self.rqt.text())),eixo)
         
@@ -414,16 +414,18 @@ class MainWindow(QMainWindow):
             for objeto in self.objetos.values():
                 if not objeto.selecionado: continue
                 objeto.rotate(matrix)
+        else:
+            self.viewer_window.rotate(float(self.rqt.text()),rot_x,rot_y)
         self.update()
 
     def girar_x3D(self):
-        self.girar([[0,0,0],[1,0,0]])
+        self.girar([[0,0,0],[1,0,0]],True,False)
     
     def girar_y3D(self):
-        self.girar([[0,0,0],[0,1,0]])
+        self.girar([[0,0,0],[0,1,0]],False,True)
     
     def girar_z3D(self):
-        self.girar([[0,0,0],[0,0,1]])
+        self.girar([[0,0,0],[0,0,1]],False,False)
 
     def snap(self):
         wx, wy = self.viewer_window.coord_world[0][0], self.viewer_window.coord_world[0][1]
