@@ -352,8 +352,9 @@ class MainWindow(QMainWindow):
 
         self.update()
 
-    def rotation_matrix(self, angle):
-        eixo = self.rotation_axis
+    def rotation_matrix(self, angle, eixo = None):
+        if eixo is None:
+            eixo = self.rotation_axis
         head = np.array(eixo[1]+[1])
         step_1 = np.array([[1,0,0,0],
                             [0,1,0,0],
@@ -409,15 +410,11 @@ class MainWindow(QMainWindow):
                 objeto.rotate(matrix)
         self.update()
 
-    def girar_x3D(self):
-        angle = 0 if self.DDDtqt.text() == '' else -float(self.DDDtqt.text())
-        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
-        if not algum_selecionado:
-            self.viewer_window.rotate(angle)
-        else:
-            for objeto in self.objetos.values():
-                if not objeto.selecionado: continue
-                objeto.rotate(angle, 0, 0)
+    def girar_x3D(self, word_axis = False):
+        angle = 0 -float(self.DDDtqt.text())
+        # if word_axis:
+
+        self.viewer_window.rotate(rotation_matrix)
         self.update()
     
     def girar_y3D(self):
