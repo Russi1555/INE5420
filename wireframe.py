@@ -789,41 +789,11 @@ class Ponto3D(Wireframe):
         x,y,z = self.coord_world
         self.coord_world = (x*dx, y*dy, z*dz)
 
-    def rotate(self, ax = 0, ay = 0, az = 0):
-        x,y,z = self.coord_world
-        trans = [x,y,z,1]
-        if ax!=0:
-            ang_x = radians(ax)
-            Rx = [
-            [1, 0, 0, 0],
-            [0, cos(ang_x), sin(ang_x), 0],
-            [0, -sin(ang_x), cos(ang_x), 0],
-            [0, 0, 0, 1]
-            ]
-            trans = np.matmul(Rx,trans)
-        
-        if ay!=0:
-            ang_y = radians(ay)
-            Ry=[
-            [cos(ang_y),0,-sin(ang_y),0],
-            [0,1,0,0],
-            [sin(ang_y),0,cos(ang_y),0],
-            [0,0,0,1]
-            ]
-            trans = np.matmul(Ry,trans)
-
-        if az!=0:
-            ang_z = radians(az)
-            Rz =[
-                [cos(ang_z),sin(ang_z),0,0],
-                [-sin(ang_z),cos(ang_z),0,0],
-                [0,0,1,0],
-                [0,0,0,1]
-            ]
-            trans = np.matmul(Rz,trans)
-
-        
-        x,y,z,um = trans
+    def rotate(self, rotation_matrix):
+        # print(rotation_matrix)
+        ponto = np.array([*self.coord_world,1])
+        ponto = ponto.dot(rotation_matrix)
+        x,y,z,_ = ponto
         self.coord_world = (x,y,z)
 
 class Objeto3D(Wireframe):
@@ -844,9 +814,9 @@ class Objeto3D(Wireframe):
         # for ponto in self.coord_world:
         #     print(ponto.coord_world)
     
-    def rotate(self,ax=0,ay=0,az=0):
+    def rotate(self, rotation_matrix):
         for ponto in self.coord_world:
-            ponto.rotate(ax,ay,az)
+            ponto.rotate(rotation_matrix)
 
         # for ponto in self.coord_world:
         #     print(ponto.coord_world)
@@ -924,7 +894,7 @@ class ViewWindow3D(Objeto3D):
         self.stret = np.array([[2/(self.width),0,0,0],[0,2/(self.heigth),0,0],[0,0,1,0],[0,0,0,1]])
     
     def rotate(self, angle: float):
-        super().rotate(angle)
+        super().rotate(angle, angle, angle)
         angle = radians(angle)
         self.angle_x -= angle
         self.angle += angle

@@ -7,6 +7,18 @@ import re
 import sys
 from collections.abc import Callable
 from widgets import ListWidget, WindowInput
+from math import degrees, radians
+
+def angle_between_vec(v1, v2):
+    dot_product = np.dot(v1, v2)
+    magnitude1 = np.linalg.norm(v1)
+    magnitude2 = np.linalg.norm(v2)
+    cosine_theta = dot_product / (magnitude1 * magnitude2)
+    angle_in_radians = np.arccos(cosine_theta)
+    return angle_in_radians
+
+def round_vec(vec):
+    return list(map(lambda e: round(e, 2), vec))
 
 class MainWindow(QMainWindow):
     """
@@ -196,15 +208,15 @@ class MainWindow(QMainWindow):
         button("▫", atx+50,aty+75,30,30, self.estica, (-1))
 
         # Botao de giro
-        self.rqt = line_edit(atx + 100, aty + 120, 30, 30, def_value="45", text_width=1)
+        self.rqt = line_edit(atx + 100, aty + 120, 30, 30, def_value="15", text_width=1)
         button("↻", atx+30,aty+120,30,30, self.girar, ())
-        self.axisAx = line_edit(atx-40, aty + 160, 30,30, text_width=1)
-        self.axisAy = line_edit(atx-10, aty + 160, 30,30, text_width=1)
-        self.axisAz = line_edit(atx+20, aty + 160, 30,30, text_width=1)
+        self.axisAx = line_edit(atx-40, aty + 160, 30,30, text_width=1, def_value="-10")
+        self.axisAy = line_edit(atx-10, aty + 160, 30,30, text_width=1, def_value="0")
+        self.axisAz = line_edit(atx+20, aty + 160, 30,30, text_width=1, def_value="0")
 
-        self.axisBx = line_edit(atx+60, aty + 160, 30,30, text_width=1)
-        self.axisBy = line_edit(atx+90, aty + 160, 30,30, text_width=1)
-        self.axisBz = line_edit(atx+120, aty + 160, 30,30, text_width=1)
+        self.axisBx = line_edit(atx+60, aty + 160, 30,30, text_width=1, def_value="-10")
+        self.axisBy = line_edit(atx+90, aty + 160, 30,30, text_width=1, def_value="10")
+        self.axisBz = line_edit(atx+120, aty + 160, 30,30, text_width=1, def_value="0")
 
         # Botao de giro
         button("Ajustar aos Objetos", atx+410,aty+290,130,30, self.snap, ())
@@ -316,7 +328,7 @@ class MainWindow(QMainWindow):
                 objeto.stretch(value, value, value, self.center_point)
         self.update()
     
-    def girar(self):
+    def girar_(self):
         """
         Gira todos os objetos ao redor do proprio centro.
 
@@ -337,6 +349,67 @@ class MainWindow(QMainWindow):
                     else:
                         objeto.rotate(angle, self.center_point)
 
+        self.update()
+
+    def rotation_matrix(self, angle):
+        eixo = self.rotation_axis
+        print(eixo)
+        head = np.array(eixo[1]+[1])
+        print("original:",head)
+        step_1 = np.array([[1,0,0,0],
+                            [0,1,0,0],
+                            [0,0,1,0],
+                            [-eixo[0][0],-eixo[0][1],-eixo[0][2],1]])
+        head = np.matmul(head, step_1)
+
+        ang_x = angle_between_vec(np.array([0, 1]), np.array([head[2],head[1]]))
+        
+        step_2 = np.array([[1, 0, 0, 0],
+                           [0, cos(ang_x), sin(ang_x), 0],
+                           [0, -sin(ang_x), cos(ang_x), 0],
+                           [0, 0, 0, 1]])
+        head = np.matmul(head, step_2)
+
+        ang_z = angle_between_vec(np.array([0,1]), np.array([head[0],head[1]]))
+
+        step_3 = np.array([[cos(ang_z),sin(ang_z),0,0],
+                           [-sin(ang_z),cos(ang_z),0,0],
+                           [0,0,1,0],
+                           [0,0,0,1]])
+        
+        step_4 = np.array([[cos(angle),0,-sin(angle),0],
+                           [0,1,0,0],
+                           [sin(angle),0,cos(angle),0],
+                           [0,0,0,1]])
+
+        step_5 = np.array([[cos(-ang_z),sin(-ang_z),0,0],
+                           [-sin(-ang_z),cos(-ang_z),0,0],
+                           [0,0,1,0],
+                           [0,0,0,1]])
+        
+        step_6 = np.array([[1, 0, 0, 0],
+                           [0, cos(-ang_x), sin(-ang_x), 0],
+                           [0, -sin(-ang_x), cos(-ang_x), 0],
+                           [0, 0, 0, 1]])
+
+        step_7 = np.array([[1,0,0,0],
+                           [0,1,0,0],
+                           [0,0,1,0],
+                           [eixo[0][0],eixo[0][1],eixo[0][2],1]])
+
+        return reduce(np.matmul, [step_1, step_2, step_3, step_4, step_5, step_6, step_7])
+
+    def girar(self):
+        
+        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
+        matrix = self.rotation_matrix(radians(float(self.rqt.text())))
+        
+        if not algum_selecionado:
+            self.viewer_window.rotate(matrix)
+        else:
+            for objeto in self.objetos.values():
+                if not objeto.selecionado: continue
+                objeto.rotate(matrix)
         self.update()
 
     def girar_x3D(self):
@@ -469,7 +542,7 @@ class MainWindow(QMainWindow):
                 self.limiares[2] = min(self.limiares[2], limiares[2])
                 self.limiares[3] = max(self.limiares[3], limiares[3])
         
-        print(self.viewer_window.center_point)
+        # print(self.viewer_window.center_point)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
