@@ -71,14 +71,12 @@ class DescritorOBJ:
                 fila_para_escrita.append(escrita_futura_nome)
 
                 arquivo.write(escrita_v) #isso definitivamente precisa
-                # print(escrita_v)
             #arquivo.write("color "+str(objeto.color.getRgb())+"\n") #precisa mas escrito diferente
             
             count_fila = contador_v
             while(fila_para_escrita):
                 temp = fila_para_escrita.pop()
                 arquivo.write("\n" + temp )
-                # print(temp)
                 count_fila +=1
 
     def load_objs(self):
@@ -91,7 +89,6 @@ class DescritorOBJ:
 
                 info = linha.split()
                 if info == []: continue
-                # print(info)
                 identficador = info[0]
                 # Identifica as coordenadas 3D de um ponto
                 if identficador == 'v':

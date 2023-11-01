@@ -32,6 +32,7 @@ class MainWindow(QMainWindow):
 
         # transformacoes da window
         self.viewer_window = ViewWindow3D(-49,-30,99,60)
+        self.viewer_window.translade(0,0,-100)
         muito = 10000000
         self.yaxis = Objeto3D("y", [(0,muito,0),(0,-muito,0)], QColor(0,255,0))
         self.xaxis = Objeto3D("x", [(muito,0,0),(-muito,0,0)], QColor(255,0,0))
@@ -93,7 +94,6 @@ class MainWindow(QMainWindow):
             self.objetos = dict()
             self.lista_objetos.clear()
             objetos = self.descritor.load_objs()
-            # print(objetos)
             for nome, obj in objetos.items():
                 novo_obj = obj["type"](obj["name"], obj["points"], obj["color"])
                 self.objetos[nome] = novo_obj
@@ -191,8 +191,8 @@ class MainWindow(QMainWindow):
         button("←", atx,aty+15,30,30, self.translacao, ("esq",))
         button("→", atx+60,aty+15,30,30, self.translacao, ("dir",))
         button("↓", atx+30,aty+30,30,30, self.translacao, ("bax",))
-        button("↗", atx+60,aty-6,20,20, self.translacao, ("trz",))
-        button("↙", atx+10,aty+45,20,20, self.translacao, ("frn",))
+        button("↗", atx+60,aty-6,20,20, self.translacao, ("frn",))
+        button("↙", atx+10,aty+45,20,20, self.translacao, ("trz",))
 
         # Botao de estica e encolhe
         self.sqt = line_edit(atx + 100, aty + 75, 30,30, def_value="1.5", text_width=1)
@@ -324,9 +324,7 @@ class MainWindow(QMainWindow):
     def rotation_matrix(self, angle, eixo = None):
         if eixo is None:
             eixo = self.rotation_axis
-        # print(eixo)
         head = np.array(eixo[1]+[1])
-        # print(head)
         step_1 = np.array([[1,0,0,0],
                             [0,1,0,0],
                             [0,0,1,0],
@@ -478,19 +476,15 @@ class MainWindow(QMainWindow):
             else:
                 # Renderizacao de wireframes e curvas de bezier normais
                 linhas, limiares = objeto.render_to_view(valor_clip if type(objeto) == Wireframe else valor_clip_curva, limiar_points=[])
-                # print(linhas)
                 for linha in linhas:
                     qp.drawLine(*linha)
             
             # Calcula os limites que a window deveria ter para que todos os objetos coubessem na tela
             if nome not in {"window", "eixo"} and len(limiares) == 4:
-                # print(limiares)
                 self.limiares[0] = min(self.limiares[0], limiares[0])
                 self.limiares[1] = max(self.limiares[1], limiares[1])
                 self.limiares[2] = min(self.limiares[2], limiares[2])
                 self.limiares[3] = max(self.limiares[3], limiares[3])
-        
-        # print(self.viewer_window.center_point)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

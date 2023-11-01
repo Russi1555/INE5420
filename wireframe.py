@@ -21,8 +21,6 @@ def angle_between_vec(v1, v2 = np.array([0,1])):
     return atan2(determinant, dot_product)
     magnitude1 = np.linalg.norm(v1)
     magnitude2 = np.linalg.norm(v2)
-    # print(magnitude1)
-    # print("mag 2:" + str(magnitude2))
     if magnitude2 == 0 or magnitude1 == 0:
         cosine_theta = 1
     else:
@@ -437,7 +435,6 @@ class Wireframe_filled(Wireframe):
             if ponta_inicial == ponta_final: continue
             # Dividem uma borda, basta criar uma linha que una os pontos
             elif abs(x0-x1) < precision or abs(y0-y1) < precision:
-                # print("Borda")
                 final_lines.append(((x1, y1), (x0, y0)))
             else:
                 # Descobre em quina tem que conectar
@@ -563,7 +560,6 @@ class Bezier(Wireframe):
         # A propagacao da curva encontrou uma borda, mas o ponto final da curva ainda esta na window
         points_from_end = []
         if (encountered_window or points_from_start == []) and not linha_clippada is None and linha_clippada[1] == ponto_final:
-            # print("Im rendering from end")
             for p in range(n_points-1, -1, -1):
                 current_scale = p * step
                 current_point = (float(self.K(self.Gbx, current_scale)),float(self.K(self.Gby, current_scale)))
@@ -674,9 +670,7 @@ class BSpline(Wireframe):
         """
         xs = [p[0] for p in points]
         ys = [p[1] for p in points]
-        # zs = [p[2] for p in points]
-        # print(np.array(xs))
-        # print(self.Mb)
+        # zs = [p[2] for p in points])
         Cx = np.matmul(self.Mb, np.array(xs))
         Cy = np.matmul(self.Mb, np.array(ys))
         # Cz = np.matmul(self.Mb, np.array(zs))
@@ -839,7 +833,7 @@ class Objeto3D(Wireframe):
 class ViewWindow3D(Objeto3D):
 
     def __init__(self, x0: float, y0: float, width: float, heigth: float) -> None:
-        self.dist_focal = 3
+        self.dist_focal = 100
         self.SE, self.SD, self.ID, self.IE = (x0,y0,self.dist_focal), (x0+width,y0,self.dist_focal), (x0+width,y0+heigth,self.dist_focal), (x0,y0+heigth,self.dist_focal)
         self.width, self.heigth = width, heigth
         self.revert_transformation = np.identity(4)
@@ -849,17 +843,8 @@ class ViewWindow3D(Objeto3D):
     def ortogonal(self, points: list):
         points = list(map(lambda p: np.array((*p, 1)), points))
         matrix = np.matmul(self.revert_transformation, self.stret)
-        perspectiva = np.array([[1,0,0,0],
-                                [0,1,0,0],
-                                [0,0,1,0],
-                                [0,0,1/self.dist_focal,0]])
-
-        print("------")
-        print(matrix)
-        matrix = np.matmul(matrix, perspectiva)
-        print(matrix)
-
-        new_points = list(map(lambda vec: tuple(vec.dot(matrix)[:2]), points))
+        new_points = list(map(lambda vec: vec.dot(matrix), points))
+        new_points = list(map(lambda p: (p[0]/(p[2]/self.dist_focal), p[1]/(p[2]/self.dist_focal)), new_points))
         return new_points
     
     def stretch(self, x_factor: int, y_factor: int, z_factor):
@@ -870,7 +855,6 @@ class ViewWindow3D(Objeto3D):
     
     def transform(self, matrix: list):
         self.revert_transformation = np.matmul(self.revert_transformation, np.linalg.inv(matrix))
-        self.up_vector.transform(matrix)
         super().transform(matrix)
         self.desloc = np.array([[1,0,0],[0,1,0],[-self.center_point[0],-self.center_point[1],1]])
 
