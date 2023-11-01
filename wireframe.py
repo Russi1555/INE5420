@@ -829,7 +829,7 @@ class Objeto3D(Wireframe):
         # print(self.coord_world)
         for ponto in self.coord_world:
             ponto.translade(dx,dy, dz)
-
+            
     def stretch(self, dx: int, dy: int, dz: int):
         for ponto in self.coord_world:
             ponto.stretch(dx,dy,dz)
@@ -894,6 +894,7 @@ class ViewWindow3D(Objeto3D):
         eixo = self.vpn
         head = list(eixo.coord_world[1].coord_world) + [1]
         up = list(self.up_vector.coord_world[1].coord_world) + [1]
+        print(up)
         # print(eixo.coord_world[0])
         # print(head)
         step_1 = np.array([[1,0,0,0],
@@ -932,6 +933,8 @@ class ViewWindow3D(Objeto3D):
                            [-sin(ang_z),cos(ang_z),0,0],
                            [0,0,1,0],
                            [0,0,0,1]])
+        
+        
 
         return reduce(np.matmul, [step_1, step_2, step_3, step_4])
     
@@ -950,6 +953,18 @@ class ViewWindow3D(Objeto3D):
 
         points = list(map(lambda p: np.array((*p, 1)), points))
         matrix = reduce(np.matmul, [self.vpn_perspective(), self.stret])
+        #print(points)
+        up = list(self.up_vector.coord_world[1].coord_world) + [1]
+        dx = 0
+        dy = 0
+        dz = -(up[2]+29)/100
+        step_5 = np.array([
+            [-dz,0,0,0],
+            [0,-dz,0,0],
+            [dy,dx,0,1],
+            [0,0,0,-dz]])
+        
+        matrix = np.matmul(matrix, step_5)
         new_points = list(map(lambda vec: vec.dot(matrix), points))
         new_points = list(map(lambda p: (p[0], p[1]), new_points))
         # print(new_points)
