@@ -801,240 +801,78 @@ class Ponto3D(Wireframe):
     def __init__(self, coordenada):
         self.coord_world = coordenada
     
-    def translade(self, dx: int, dy: int, dz : int):
-        x,y,z = self.coord_world
-        self.coord_world = (x+dx, y+dy, z+dz)
-
-    def stretch(self, dx,dy,dz):
-        x,y,z = self.coord_world
-        self.coord_world = (x*dx, y*dy, z*dz)
+    def transform(self, matrix):
+        ponto = np.array([*self.coord_world,1])
+        ponto = ponto.dot(matrix)
+        x,y,z,_ = ponto
+        self.coord_world = (x,y,z)
 
     def __repr__(self):
         return repr(self.coord_world)
-    
-    def rotate(self, rotation_matrix):
-        # print(rotation_matrix)
-        ponto = np.array([*self.coord_world,1])
-        ponto = ponto.dot(rotation_matrix)
-        x,y,z,_ = ponto
-        self.coord_world = (x,y,z)
 
 class Objeto3D(Wireframe):
     def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0)) -> None:
         super().__init__(label, coord_list, color, True)
         self.coord_world = [Ponto3D(p) for p in coord_list] #+ [coord_list[0]]
-        #print(coord_list)
 
     def translade(self, dx: int, dy: int, dz:int):
-        # print(self.coord_world)
-        for ponto in self.coord_world:
-            ponto.translade(dx,dy, dz)
+        matrix = np.array([[1,0,0,0],
+                           [0,1,0,0],
+                           [0,0,1,0],
+                           [dx,dy,dz,1]])
+        self.transform(matrix)
             
     def stretch(self, dx: int, dy: int, dz: int):
-        for ponto in self.coord_world:
-            ponto.stretch(dx,dy,dz)
-
-        # for ponto in self.coord_world:
-        #     print(ponto.coord_world)
+        matrix = np.array([[dx,0,0,0],
+                           [0,dy,0,0],
+                           [0,0,dx,0],
+                           [0,0,0,1]])
+        self.transform(matrix)
     
     def rotate(self, rotation_matrix):
-        for ponto in self.coord_world:
-            ponto.rotate(rotation_matrix)
+        self.transform(rotation_matrix)
 
-        # for ponto in self.coord_world:
-        #     print(ponto.coord_world)
+    def transform(self, matrix):
+        for ponto in self.coord_world:
+            ponto.transform(matrix)
     
 class ViewWindow3D(Objeto3D):
 
     def __init__(self, x0: float, y0: float, width: float, heigth: float) -> None:
-        self.SE, self.SD, self.ID, self.IE = (x0, y0,0), (x0+width, y0,0), (x0+width, y0+heigth,0), (x0, y0+heigth,0)
+        self.dist_focal = 3
+        self.SE, self.SD, self.ID, self.IE = (x0,y0,self.dist_focal), (x0+width,y0,self.dist_focal), (x0+width,y0+heigth,self.dist_focal), (x0,y0+heigth,self.dist_focal)
         self.width, self.heigth = width, heigth
-        self.angle_x, self.angle_y, self.angle_z = 0, 0, 0
-        self.angle = 0
+        self.revert_transformation = np.identity(4)
         super().__init__("window",[Ponto3D(self.SE), Ponto3D(self.SD), Ponto3D(self.ID), Ponto3D(self.IE)], QColor(0,0,0))
-        self.vpn = Objeto3D("vpn",[[x0+width/2, y0+heigth/2, 0], [x0+width/2, y0+heigth/2, 1]])
-        self.up_vector = Objeto3D("vpn",[[x0+width/2, y0+heigth/2, 0], [x0+width/2, y0+heigth, 0]])
-        # self.desloc = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[-self.center_point[0],-self.center_point[1],0,1]])
-        
-        # self.rot_x = [
-        #     [1, 0, 0, 0],
-        #     [0, cos(0), sin(0), 0],
-        #     [0, -sin(0), cos(0), 0],
-        #     [0, 0, 0, 1]
-        #     ]
-        
-        # self.rot_y=[
-        #     [cos(0),0,-sin(0),0],
-        #     [0,1,0,0],
-        #     [sin(0),0,cos(0),0],
-        #     [0,0,0,1]
-        #     ]
-        
-        # self.rot_z =[
-        #         [cos(0),sin(0),0,0],
-        #         [-sin(0),cos(0),0,0],
-        #         [0,0,1,0],
-        #         [0,0,0,1]
-        #     ]
         self.stret = np.array([[2/(self.width),0,0,0],[0,2/(self.heigth),0,0],[0,0,1,0],[0,0,0,1]])    
-
-    @property
-    def vrp(self):
-        xacc, yacc, zacc = 0
-        points = set(self.coord_world)
-        for x, y, z in points:
-            xacc += x
-            yacc += y
-            zacc += z
-        
-        self.center_point = (xacc/len(points), yacc/len(points), zacc/len(points))
-        return self.center_point
-
-    def vpn_perspective(self):
-        eixo = self.vpn
-        head = list(eixo.coord_world[1].coord_world) + [1]
-        up = list(self.up_vector.coord_world[1].coord_world) + [1]
-        print(up)
-        # print(eixo.coord_world[0])
-        # print(head)
-        step_1 = np.array([[1,0,0,0],
-                            [0,1,0,0],
-                            [0,0,1,0],
-                            [-eixo[0][0],-eixo[0][1],-eixo[0][2],1]])
-        head = round_vec(np.matmul(head, step_1),17)
-        up = np.matmul(up, step_1)
-
-        ang_x = angle_between_vec(np.array([head[1],head[2]]))
-        # print("angle to x", round(degrees(ang_x)))
-        
-        step_2 = np.array([[1,0,0,0],
-                           [0,cos(ang_x),sin(ang_x),0],
-                           [0,-sin(ang_x),cos(ang_x),0],
-                           [0,0,0,1]])
-        head = round_vec(np.matmul(head, step_2),17)
-        up = np.matmul(up, step_2)
-
-        ang_y = angle_between_vec(np.array([head[0],head[2]]))
-        # print("angle to y", round(degrees(ang_y)))
-
-        step_3 = np.array ([[cos(ang_y),0,-sin(ang_y),0],
-                            [0,1,0,0],
-                            [sin(ang_y),0,cos(ang_y),0],
-                            [0,0,0,1]])
-        
-        up = np.matmul(up, step_3)
-        
-        ang_z = angle_between_vec(np.array([up[0], up[1]]))
-        # ang_z = 0
-        # print("angle to z", round(degrees(ang_z)))
-        # print("up vector", round_vec(up, 2))
-
-        step_4 = np.array([[cos(ang_z),sin(ang_z),0,0],
-                           [-sin(ang_z),cos(ang_z),0,0],
-                           [0,0,1,0],
-                           [0,0,0,1]])
-        
-        
-
-        return reduce(np.matmul, [step_1, step_2, step_3, step_4])
-    
-    # def to_window_coords(self, points: list):
-    #     points = list(map(lambda p: np.array((*p, 1)), points))
-    #     print("CALL 1")
-    #     matrix = reduce(np.matmul, [self.desloc, self.rot_x, self.rot_y, self.rot_z, self.stret])
-    #     new_points = list(map(lambda vec: vec.dot(matrix), points))
-    #     new_points = list(map(lambda p: (p[0], p[1], p[2]), new_points))
-    #     # print(new_points)
-    #     return new_points
     
     def ortogonal(self, points: list):
-        # print(self.coord_world)
-        # print(self.vpn.coord_world)
-
         points = list(map(lambda p: np.array((*p, 1)), points))
-        matrix = reduce(np.matmul, [self.vpn_perspective(), self.stret])
-        #print(points)
-        up = list(self.up_vector.coord_world[1].coord_world) + [1]
-        dx = 0
-        dy = 0
-        dz = -(up[2]+29)/100
-        step_5 = np.array([
-            [-dz,0,0,0],
-            [0,-dz,0,0],
-            [dy,dx,0,1],
-            [0,0,0,-dz]])
-        
-        matrix = np.matmul(matrix, step_5)
-        new_points = list(map(lambda vec: vec.dot(matrix), points))
-        new_points = list(map(lambda p: (p[0], p[1]), new_points))
-        # print(new_points)
+        matrix = np.matmul(self.revert_transformation, self.stret)
+        perspectiva = np.array([[1,0,0,0],
+                                [0,1,0,0],
+                                [0,0,1,0],
+                                [0,0,1/self.dist_focal,0]])
+
+        print("------")
+        print(matrix)
+        matrix = np.matmul(matrix, perspectiva)
+        print(matrix)
+
+        new_points = list(map(lambda vec: tuple(vec.dot(matrix)[:2]), points))
         return new_points
-
-    # def from_window_coords(self, points: list):
-    #     points = list(map(lambda p: np.array((*p, 1)), points))
-    #     matrix = np.matmul(np.linalg.inv(self.stret), np.linalg.inv(self.rot))
-    #     matrix = np.matmul(matrix, np.linalg.inv(self.desloc))
-    #     new_points = list(map(lambda vec: vec.dot(matrix), points))
-    #     new_points = list(map(lambda p: (p[0], p[1], p[2]), new_points))
-    #     return new_points
-    
-    def translade(self, dx: int, dy: int, dz = 0):
-        theta_X = radians(self.angle_x)
-        theta_Y = radians(self.angle_y)
-        theta_Z = radians(self.angle_z)
-
-        ndx = dx * cos(theta_X) - dy * sin(theta_Y)
-        ndy = dy * cos(theta_Y) + dx * sin(theta_X)
-        ndz = dz * cos(theta_Z) + dz * sin(theta_Z)
-
-        self.vpn.translade(ndx, ndy, ndz)
-        self.up_vector.translade(ndx, ndy, ndz)
-        super().translade(ndx, ndy, ndz)
-        # self.center_point = [sum(map(lambda e: e[i],self.coord_world))/len(self.coord_world) for i in range(3)]
     
     def stretch(self, x_factor: int, y_factor: int, z_factor):
-        # self.vpn.stretch(x_factor, y_factor, z_factor)
         super().stretch(x_factor, y_factor, z_factor)
         self.width *= x_factor
         self.heigth *= y_factor
         self.stret = np.array([[2/(self.width),0,0,0],[0,2/(self.heigth),0,0],[0,0,1,0],[0,0,0,1]])
     
-    def rotate(self, rotation_matrix):
-        self.vpn.rotate(rotation_matrix)
-        self.up_vector.rotate(rotation_matrix)
-        # super().rotate(rotation_matrix)
-        # angle = radians(angle)
-        # if r_x:
-        #     self.angle_x -= angle
-        #     self.rot_x = [[1, 0, 0, 0],
-        #         [0, cos(self.angle_x), sin(self.angle_x), 0],
-        #         [0, -sin(self.angle_x), cos(self.angle_x), 0],
-        #         [0, 0, 0, 1]
-        #         ]
-        
-        # if r_y:
-        #     self.angle_y -= angle
-        #     self.rot_y=[
-        #         [cos(self.angle_y),0,-sin(self.angle_y),0],
-        #         [0,1,0,0],
-        #         [sin(self.angle_y),0,cos(self.angle_y),0],
-        #         [0,0,0,1]
-        #         ]
-    
-    def transform(self, transform_list: list):
-        super().transform(transform_list)
-        self.vrp()
+    def transform(self, matrix: list):
+        self.revert_transformation = np.matmul(self.revert_transformation, np.linalg.inv(matrix))
+        self.up_vector.transform(matrix)
+        super().transform(matrix)
         self.desloc = np.array([[1,0,0],[0,1,0],[-self.center_point[0],-self.center_point[1],1]])
 
     def points(self, _):
         return super().points(True)
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    a =Ponto3D((10,10,10))
-    b = Ponto3D((30,30,30))
-    ha = Objeto3D("ha",[a,b])
-    print(ha.rotate(90))
-    exit()
-    sys.exit(app.exec_())
