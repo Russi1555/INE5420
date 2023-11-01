@@ -9,19 +9,6 @@ from collections.abc import Callable
 from widgets import ListWidget, WindowInput
 from math import degrees, radians
 
-def angle_between_vec(v1, v2):
-    dot_product = np.dot(v1, v2)
-    magnitude1 = np.linalg.norm(v1)
-    magnitude2 = np.linalg.norm(v2)
-    print(magnitude1)
-    print("mag 2:" + str(magnitude2))
-    if magnitude2 == 0 or magnitude1 == 0:
-        cosine_theta = 1
-    else:
-        cosine_theta = dot_product / (magnitude1 * magnitude2)
-    angle_in_radians = np.arccos(cosine_theta)
-    return angle_in_radians
-
 def round_vec(vec):
     return list(map(lambda e: round(e, 2), vec))
 
@@ -190,10 +177,10 @@ class MainWindow(QMainWindow):
         button("Novo Objeto", 50,20,100,30, novo_botao)
         
         # Bota de salvar objetos
-        button("Salvar Objetos",30,265,130,30, salvar_objetos )
+        # button("Salvar Objetos",30,265,130,30, salvar_objetos )
 
-        # Bota de carregar objetos
-        button("Carregar Objetos",30,305,130,30, carregar_objetos )
+        # # Bota de carregar objetos
+        # button("Carregar Objetos",30,305,130,30, carregar_objetos )
         
         # Ancoras dos botoes
         atx,aty = 45,350
@@ -227,8 +214,8 @@ class MainWindow(QMainWindow):
         label.setText(f"Eixo:")
 
         # Botao de giro
-        button("Ajustar aos Objetos", atx+410,aty+290,130,30, self.snap, ())
-        self.DDDtqt = line_edit(atx + 365, aty + 290, 30,30, def_value="1",text_width=1)
+        # button("Ajustar aos Objetos", atx+410,aty+290,130,30, self.snap, ())
+        # self.DDDtqt = line_edit(atx + 365, aty + 290, 30,30, def_value="1",text_width=1)
         button("3D ↻ X", atx+155,aty+290,60,30, self.girar_x3D, ())
         button("3D ↻ Y", atx+225,aty+290,60,30, self.girar_y3D, ())
         button("3D ↻ Z", atx+295,aty+290,60,30, self.girar_z3D, ())
@@ -327,42 +314,19 @@ class MainWindow(QMainWindow):
         value = 1 if self.sqt.text() == '' else float(self.sqt.text()) ** tipo
         algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
         if not algum_selecionado:
-            self.viewer_window.stretch(value, value,0)
+            self.viewer_window.stretch(value, value, value)
         else:
             for objeto in self.objetos.values():
                 if not objeto.selecionado: continue
                 objeto.stretch(value, value, value)
         self.update()
-    
-    def girar_(self):
-        """
-        Gira todos os objetos ao redor do proprio centro.
-
-        Args:
-            value (int): Angulo.
-            center(tuple): Ponto Cental da rotacao.
-        """
-        angle = 0 if self.rqt.text() == '' else -float(self.rqt.text())
-        algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
-        if not algum_selecionado:
-            self.viewer_window.rotate(angle)
-        else:
-            for objeto in self.objetos.values():
-                if not objeto.selecionado: continue
-                else:
-                    if isinstance(objeto, Objeto3D):
-                        print("OBJETO SELECIONADO DEVE SER ROTACIONADO COM FUNCOES 3D OU ROTACIONAR A JANELA SEM NADA SELECIONADO")
-                    else:
-                        objeto.rotate(angle, self.center_point)
-
-        self.update()
 
     def rotation_matrix(self, angle, eixo = None):
         if eixo is None:
             eixo = self.rotation_axis
-        print(eixo)
+        # print(eixo)
         head = np.array(eixo[1]+[1])
-        print(head)
+        # print(head)
         step_1 = np.array([[1,0,0,0],
                             [0,1,0,0],
                             [0,0,1,0],
@@ -406,7 +370,7 @@ class MainWindow(QMainWindow):
 
         return reduce(np.matmul, [step_1, step_2, step_3, step_4, step_5, step_6, step_7])
 
-    def girar(self, eixo = None, rot_x = True, rot_y = True):
+    def girar(self, eixo = None):
         algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
         matrix = self.rotation_matrix(radians(float(self.rqt.text())),eixo)
         
@@ -415,17 +379,17 @@ class MainWindow(QMainWindow):
                 if not objeto.selecionado: continue
                 objeto.rotate(matrix)
         else:
-            self.viewer_window.rotate(float(self.rqt.text()),rot_x,rot_y)
+            self.viewer_window.rotate(matrix)
         self.update()
 
     def girar_x3D(self):
-        self.girar([[0,0,0],[1,0,0]],True,False)
+        self.girar([[0,0,0],[1,0,0]])
     
     def girar_y3D(self):
-        self.girar([[0,0,0],[0,1,0]],False,True)
+        self.girar([[0,0,0],[0,1,0]])
     
     def girar_z3D(self):
-        self.girar([[0,0,0],[0,0,1]],False,False)
+        self.girar([[0,0,0],[0,0,1]])
 
     def snap(self):
         wx, wy = self.viewer_window.coord_world[0][0], self.viewer_window.coord_world[0][1]
