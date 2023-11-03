@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from PyQt5 import QtGui, QtWidgets, QtCore
-from wireframe import Wireframe, Wireframe_filled, Curved2D, BSpline
+from primitivas2D import Wireframe, Wireframe_filled, Curved2D, BSpline
 
 class DescritorOBJ:
     def __init__(self):

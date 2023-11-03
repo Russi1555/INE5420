@@ -4,7 +4,8 @@ Modulo com especializacoes de alguns widgets usados no projeto.
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QMainWindow, QCheckBox, QComboBox
-from wireframe import Wireframe, Wireframe_filled, Curved2D, BSpline, Objeto3D
+from primitivas2D import Wireframe, Wireframe_filled, Curved2D, BSpline
+from primitivas3D import Objeto3D
 
 class WindowInput(QMainWindow):
     '''
@@ -98,6 +99,7 @@ class ListWidget(QtWidgets.QListWidget, QMainWindow):
         self.mainwindow = mainwindow
 
     def clicked(self, item):
+        print(self.mainwindow.objetos)
         self.mainwindow.objetos[str(item.text())].selecionado = not self.mainwindow.objetos[str(item.text())].selecionado
         self.mainwindow.update()
 

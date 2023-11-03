@@ -1,13 +1,14 @@
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QCheckBox, QSlider
 from PyQt5.QtCore import Qt
-from wireframe import *
+from primitivas2D import *
+from primitivas3D import *
 from DescritorOBJ import DescritorOBJ
 import re
 import sys
 from collections.abc import Callable
 from widgets import ListWidget, WindowInput
-from math import degrees, radians
+from math import degrees, radians, inf
 
 def round_vec(vec):
     return list(map(lambda e: round(e, 2), vec))
@@ -32,12 +33,15 @@ class MainWindow(QMainWindow):
 
         # transformacoes da window
         self.viewer_window = ViewWindow3D(-49,-30,99,60)
-        self.viewer_window.translade(0,0,-100)
-        muito = 10000000
+        self.viewer_window.translade(0,0,-self.viewer_window.dist_focal)
+        self.update()
+
+        self.fake_window = Objeto3D("fake window", [(-49,-30,0),(50,-30,0),(50,30,0),(-49,30,0),(-49,-30,0)], QColor(0,0,0))
+        muito = 100000
         self.yaxis = Objeto3D("y", [(0,muito,0),(0,-muito,0)], QColor(0,255,0))
         self.xaxis = Objeto3D("x", [(muito,0,0),(-muito,0,0)], QColor(255,0,0))
         self.zaxis = Objeto3D("z", [(0, 0,muito),(0,0,-muito)], QColor(0,0,255))
-        self.default_objects = [self.yaxis, self.xaxis, self.zaxis]
+        self.default_objects = [self.yaxis, self.xaxis, self.zaxis, self.fake_window]
         
         # transformation quantities
         self.tqt: float = 0 #translation
@@ -183,7 +187,7 @@ class MainWindow(QMainWindow):
         # button("Carregar Objetos",30,305,130,30, carregar_objetos )
         
         # Ancoras dos botoes
-        atx,aty = 45,350
+        atx, aty = 45, 350
         
         # Botoes direcionais
         self.tqt = line_edit(atx + 100, aty + 15, 30,30, def_value="1",text_width=1)
@@ -255,6 +259,8 @@ class MainWindow(QMainWindow):
         # self.slider_label_1.setText("Sem clipping de curvas")
         # self.slider_label_1.setGeometry(atx + 240, aty + 265, 145, 20)
 
+        self.lista_objetos.addItem("fake window")
+        self.objetos["fake window"] = self.fake_window
         self.update()
 
     def instanciarNovoObjeto(self, pacote_n_c):
@@ -414,6 +420,7 @@ class MainWindow(QMainWindow):
         qp.setBrush(QtGui.QBrush(Qt.white, Qt.SolidPattern))
         qp.drawRect(self.viewport.x(),self.viewport.y(),self.viewport.width(),self.viewport.height())
         
+
         # Le as checkbox da interface
         valor_clip = int(self.slider_clip.value())
         # valor_clip_curva = int(self.slider_clip_curvas.value())
@@ -447,6 +454,7 @@ class MainWindow(QMainWindow):
         objetos["x"] = self.xaxis
         objetos["y"] = self.yaxis
         objetos["z"] = self.zaxis
+        objetos["fake window"] = self.fake_window
         
         # Itera sobre os Wireframes renderizando-os        
         self.limiares = [10000000, -10000000, 10000000, -1000000]
