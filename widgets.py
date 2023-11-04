@@ -99,7 +99,6 @@ class ListWidget(QtWidgets.QListWidget, QMainWindow):
         self.mainwindow = mainwindow
 
     def clicked(self, item):
-        print(self.mainwindow.objetos)
         self.mainwindow.objetos[str(item.text())].selecionado = not self.mainwindow.objetos[str(item.text())].selecionado
         self.mainwindow.update()
 

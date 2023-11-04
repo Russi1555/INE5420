@@ -32,11 +32,11 @@ class MainWindow(QMainWindow):
         self.setGeometry(self.top, self.left, self.window_width, self.window_height)
 
         # transformacoes da window
-        self.viewer_window = ViewWindow3D(-49,-30,99,60)
+        self.viewer_window = ViewWindow3D(-50,-30,99,60)
         self.viewer_window.translade(0,0,-self.viewer_window.dist_focal)
         self.update()
 
-        self.fake_window = Objeto3D("fake window", [(-49,-30,0),(50,-30,0),(50,30,0),(-49,30,0),(-49,-30,0)], QColor(0,0,0))
+        self.fake_window = Objeto3D("fake window", [(-50,-30,0),(50,-30,0),(50,30,0),(-50,30,0),(-50,-30,0)], QColor(0,0,0))
         muito = 100000
         self.yaxis = Objeto3D("y", [(0,muito,0),(0,-muito,0)], QColor(0,255,0))
         self.xaxis = Objeto3D("x", [(muito,0,0),(-muito,0,0)], QColor(255,0,0))
@@ -210,12 +210,14 @@ class MainWindow(QMainWindow):
         self.axisAy = line_edit(atx+40, aty + 170, 30,30, text_width=1, def_value="0")
         self.axisAz = line_edit(atx+70, aty + 170, 30,30, text_width=1, def_value="0")
 
-        self.axisBx = line_edit(atx+10, aty + 220, 30,30, text_width=1, def_value="-10")
-        self.axisBy = line_edit(atx+40, aty + 220, 30,30, text_width=1, def_value="10")
-        self.axisBz = line_edit(atx+70, aty + 220, 30,30, text_width=1, def_value="0")
+        self.axisBx = line_edit(atx+10, aty + 224, 30,30, text_width=1, def_value="-10")
+        self.axisBy = line_edit(atx+40, aty + 224, 30,30, text_width=1, def_value="10")
+        self.axisBz = line_edit(atx+70, aty + 224, 30,30, text_width=1, def_value="0")
         label = QtWidgets.QLabel(self)
         label.setGeometry(atx-25, aty+170, 40, 30)
         label.setText(f"Eixo:")
+
+        self.own_axis = check_box(atx+90, aty+206, 15,15, text="Eixo próprio", text_width=81)
 
         # Botao de giro
         # button("Ajustar aos Objetos", atx+410,aty+290,130,30, self.snap, ())
@@ -327,9 +329,7 @@ class MainWindow(QMainWindow):
                 objeto.stretch(value, value, value)
         self.update()
 
-    def rotation_matrix(self, angle, eixo = None):
-        if eixo is None:
-            eixo = self.rotation_axis
+    def rotation_matrix(self, angle, eixo):
         head = np.array(eixo[1]+[1])
         step_1 = np.array([[1,0,0,0],
                             [0,1,0,0],
@@ -375,13 +375,16 @@ class MainWindow(QMainWindow):
         return reduce(np.matmul, [step_1, step_2, step_3, step_4, step_5, step_6, step_7])
 
     def girar(self, eixo = None):
+        if eixo is None:
+            eixo = self.rotation_axis
         algum_selecionado = any(list(map(lambda o: o.selecionado, self.objetos.values())))
         matrix = self.rotation_matrix(radians(float(self.rqt.text())),eixo)
         
         if algum_selecionado:
             for objeto in self.objetos.values():
-                if not objeto.selecionado: continue
-                objeto.rotate(matrix)
+                if objeto.selecionado:
+                # print(int(self.own_axis.checkState()), int(self.own_axis.checkState()) == 2)
+                    objeto.rotate(matrix, None if int(self.own_axis.checkState()) != 2 else eixo)
         else:
             self.viewer_window.rotate(matrix)
         self.update()

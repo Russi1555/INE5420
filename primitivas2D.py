@@ -44,7 +44,7 @@ class Wireframe:
         self.coord_view: list[tuple[int]] = None
         self.intersec_points: list = None
         # self.outersec_points: list = None
-        self.center_point: tuple = np.array([sum(map(lambda e: e[0], coord_list))/len(coord_list), sum(map(lambda e: e[1], coord_list))/len(coord_list)])
+        # self.center_point: tuple = np.array([sum(map(lambda e: e[0], coord_list))/len(coord_list), sum(map(lambda e: e[1], coord_list))/len(coord_list)])
         self.clipped_points: list = None
         self.closed: bool = closed
         self.xvw: int = None
