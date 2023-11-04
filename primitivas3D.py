@@ -85,9 +85,6 @@ class ViewWindow3D(Objeto3D):
         new_points = list(map(lambda p: (p[0]/(p[2]/self.dist_focal), p[1]/(p[2]/self.dist_focal)), new_points))
         return new_points
     
-    def stretch(self, x_factor: int, y_factor: int, z_factor):
-        super().stretch(x_factor, y_factor, z_factor)
-    
     def transform(self, matrix: list):
         self.revert_transformation = np.matmul(np.linalg.inv(matrix), self.revert_transformation)
         super().transform(matrix)

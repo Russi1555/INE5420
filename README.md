@@ -22,12 +22,12 @@ make
 
 2. Insira seu nome
 
-3. Insira as coordenadas (Formato: <strong>(x0, y0, z0) (x1, y1, z1) (x2, y2, z2) </strong>...)
-    - <strong>Coordenadas para um cubo e tetraedro estão disponíveis no arquivo sample.</strong>
+3. Insira as coordenadas (Formato: (x0, y0, z0) (x1, y1, z1) (x2, y2, z2)...)
+    - Coordenadas para um cubo e tetraedro estão disponíveis no arquivo sample.
 
 4. Um código RGB pode ser inserido para definir a cor do objeto, caso não inserido o padrão é 255 0 0.
 
-5. Um seletor permite escolher o tipo de objeto criado a partir das coordenadas <strong>(Atualmente apenas Objeto3D)</strong>.
+5. Um seletor permite escolher o tipo de objeto criado a partir das coordenadas (Atualmente apenas Objeto3D).
 
 
 <li><strong>Transformacoes:</strong> Há um pad com as transformações na esquerda da interface.</li>
@@ -38,8 +38,9 @@ make
 
 - Escala (Quadrados): Proporção do aumento ou redução.
 
-- Rotação (Seta circular): Angulo em graus da rotação no sentido horario <strong>(Exige dois pontos diferentes nas caixas em baixo para definir o eixo de rotação)</strong>.
-    - <strong> Botões de Rotação nos eixos canonicos realizam a rotação diretamente naqueles eixos, desconsiderando o eixo inserido pelo usuário.</strong>
+- Rotação (Seta circular): Angulo em graus da rotação no sentido horario (Exige dois pontos diferentes nas caixas em baixo para definir o eixo de rotação).
+    -  Botões de Rotação nos eixos canonicos realizam a rotação diretamente naqueles eixos, desconsiderando o eixo inserido pelo usuário.
+    - <strong>Uma checkbox "Eixo próprio" quando selecionada fara que objetos realizem a rotação como se o eixo de rotação atravessasse seu ponto central ao invés de rodar de fato ao redor do eixo no mundo.</strong>
 
   
 

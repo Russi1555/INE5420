@@ -263,7 +263,6 @@ class MainWindow(QMainWindow):
 
         self.lista_objetos.addItem("fake window")
         self.objetos["fake window"] = self.fake_window
-        self.update()
 
     def instanciarNovoObjeto(self, pacote_n_c):
         nome, coords, cor, object_type, closed = pacote_n_c
@@ -386,7 +385,7 @@ class MainWindow(QMainWindow):
                 # print(int(self.own_axis.checkState()), int(self.own_axis.checkState()) == 2)
                     objeto.rotate(matrix, None if int(self.own_axis.checkState()) != 2 else eixo)
         else:
-            self.viewer_window.rotate(matrix)
+            self.viewer_window.rotate(matrix, None if int(self.own_axis.checkState()) != 2 else eixo)
         self.update()
 
     def girar_x3D(self):
