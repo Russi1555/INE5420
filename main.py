@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         self.update()
 
         self.fake_window = Objeto3D("fake window", [(-50,-30,0),(50,-30,0),(50,30,0),(-50,30,0),(-50,-30,0)], QColor(0,0,0))
-        muito = 100000
+        muito = 100
         self.yaxis = Objeto3D("y", [(0,muito,0),(0,-muito,0)], QColor(0,255,0))
         self.xaxis = Objeto3D("x", [(muito,0,0),(-muito,0,0)], QColor(255,0,0))
         self.zaxis = Objeto3D("z", [(0, 0,muito),(0,0,-muito)], QColor(0,0,255))
