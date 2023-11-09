@@ -459,7 +459,7 @@ class MainWindow(QMainWindow):
         objetos["fake window"] = self.fake_window
         
         # Itera sobre os Wireframes renderizando-os        
-        self.limiares = [10000000, -10000000, 10000000, -1000000]
+        # self.limiares = [10000000, -10000000, 10000000, -1000000]
         for nome, objeto in objetos.items():
             
             objeto.update_window(used_window)
@@ -470,19 +470,24 @@ class MainWindow(QMainWindow):
             else: qp.setPen(QtGui.QPen(objeto.color,1))
             
             # Wireframe_filled/Polygon precisa ter outra rotina de renderizacao por ser preenchido
-            if type(objeto) == Wireframe_filled:
-                qp.setBrush(QtGui.QBrush(objeto.color))
-                linhas, limiares = objeto.render_to_view(valor_clip, limiar_points=[])
-                if linhas != [[]]:
-                    qp.drawPolygon(QtGui.QPolygonF(list(map(lambda l: l[0], linhas))))
+            # if type(objeto) == Wireframe_filled:
+            #     qp.setBrush(QtGui.QBrush(objeto.color))
+            #     linhas, limiares = objeto.render_to_view(valor_clip, limiar_points=[])
+            #     if linhas != [[]]:
+            #         qp.drawPolygon(QtGui.QPolygonF(list(map(lambda l: l[0], linhas))))
                 
-                # Renderiza a borda preta de quando o polygon eh selecionado
-                if self.objetos[nome].selecionado:
-                    qp.setPen(QtGui.QPen(Qt.black,4))
-                    linhas , _ = objeto.render_to_view(valor_clip, limiar_points=[])
-                    for linha in linhas:
-                        if linha != []: qp.drawLine(*linha)
+            #     # Renderiza a borda preta de quando o polygon eh selecionado
+            #     if self.objetos[nome].selecionado:
+            #         qp.setPen(QtGui.QPen(Qt.black,4))
+            #         linhas , _ = objeto.render_to_view(valor_clip, limiar_points=[])
+            #         for linha in linhas:
+            #             if linha != []: qp.drawLine(*linha)
 
+            if type(objeto) == Bezier3D:
+                curvas, _ = objeto.render_to_view(0)
+                for curva in curvas:
+                    for linha in curva:
+                        qp.drawLine(*linha)
             else:
                 # Renderizacao de wireframes e curvas de bezier normais
                 linhas, limiares = objeto.render_to_view(valor_clip if type(objeto) == Wireframe else valor_clip_curva, limiar_points=[])
@@ -490,11 +495,11 @@ class MainWindow(QMainWindow):
                     qp.drawLine(*linha)
             
             # Calcula os limites que a window deveria ter para que todos os objetos coubessem na tela
-            if nome not in {"window", "eixo"} and len(limiares) == 4:
-                self.limiares[0] = min(self.limiares[0], limiares[0])
-                self.limiares[1] = max(self.limiares[1], limiares[1])
-                self.limiares[2] = min(self.limiares[2], limiares[2])
-                self.limiares[3] = max(self.limiares[3], limiares[3])
+            # if nome not in {"window", "eixo"} and len(limiares) == 4:
+            #     self.limiares[0] = min(self.limiares[0], limiares[0])
+            #     self.limiares[1] = max(self.limiares[1], limiares[1])
+            #     self.limiares[2] = min(self.limiares[2], limiares[2])
+            #     self.limiares[3] = max(self.limiares[3], limiares[3])
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -190,32 +190,37 @@ class Wireframe:
         """
         Atualiza a forma com que o objeto deve ser renderizado pela viewport.
         """
-        if limiar_points == []:
-            limiar_points = [10000000, -10000000, 10000000, -1000000]
-            if points is None:
-                for point in self.coord_world:
-                    limiar_points[0] = min(limiar_points[0], point[0])
-                    limiar_points[1] = max(limiar_points[1], point[0])
-                    limiar_points[2] = min(limiar_points[2], point[1])
-                    limiar_points[3] = max(limiar_points[3], point[1])
-            else:
-                for point in points:
-                    limiar_points[0] = min(limiar_points[0], point[0])
-                    limiar_points[1] = max(limiar_points[1], point[0])
-                    limiar_points[2] = min(limiar_points[2], point[1])
-                    limiar_points[3] = max(limiar_points[3], point[1])
-                SE = self.window.from_window_coords([(limiar_points[0], limiar_points[2])])[0]
-                ID = self.window.from_window_coords([(limiar_points[1], limiar_points[3])])[0]
-                limiar_points = [SE[0], ID[0], SE[1], ID[1]]
-        if points is None: 
-            points = self.window.ortogonal(self.coord_world)
+        # if limiar_points == []:
+        #     limiar_points = [10000000, -10000000, 10000000, -1000000]
+        #     if points is None:
+        #         for point in self.coord_world:
+        #             limiar_points[0] = min(limiar_points[0], point[0])
+        #             limiar_points[1] = max(limiar_points[1], point[0])
+        #             limiar_points[2] = min(limiar_points[2], point[1])
+        #             limiar_points[3] = max(limiar_points[3], point[1])
+        #     else:
+        #         for point in points:
+        #             limiar_points[0] = min(limiar_points[0], point[0])
+        #             limiar_points[1] = max(limiar_points[1], point[0])
+        #             limiar_points[2] = min(limiar_points[2], point[1])
+        #             limiar_points[3] = max(limiar_points[3], point[1])
+        #         SE = self.window.from_window_coords([(limiar_points[0], limiar_points[2])])[0]
+        #         ID = self.window.from_window_coords([(limiar_points[1], limiar_points[3])])[0]
+        #         limiar_points = [SE[0], ID[0], SE[1], ID[1]]
+
+
+        if points is None:
+            points = self.coord_world
+        points = self.window.ortogonal(points)
         clip = self.clip_CS if clip_key==1 else self.clip_LB if clip_key==2 else lambda e:  e
         # Clipa todos os pontos linearizados
 
         lines = list(map(lambda line: clip(line), self.linearize(points)))
+        
         # Filtra linhas nulas
         lines = list(filter(lambda line: line is not None and line[0] is not None and line[1] is not None, lines))
         # Transforma as linhas em objetos renderizaveis
+
         lines = list(map(lambda line: (tuple(map(lambda p: QPointF(*self.window2view(p)), line))), lines))
         return lines, limiar_points
 
