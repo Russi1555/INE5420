@@ -27,7 +27,9 @@ make
 
 4. Um código RGB pode ser inserido para definir a cor do objeto, caso não inserido o padrão é 255 0 0.
 
-5. Um seletor permite escolher o tipo de objeto criado a partir das coordenadas (Atualmente apenas Objeto3D).
+5. Um seletor permite escolher o tipo de objeto criado a partir das coordenadas.
+
+    - <strong>Para criar uma curva de bezier o número de pontos inseridores tem de ser múltiplo de 16. Não coloque ';' para separar linhas, coloque todos os pontos de forma corrida. (Um exemplo de curva está disponível no arquivo sample) </strong>
 
 
 <li><strong>Transformacoes:</strong> Há um pad com as transformações na esquerda da interface.</li>
@@ -40,7 +42,7 @@ make
 
 - Rotação (Seta circular): Angulo em graus da rotação no sentido horario (Exige dois pontos diferentes nas caixas em baixo para definir o eixo de rotação).
     -  Botões de Rotação nos eixos canonicos realizam a rotação diretamente naqueles eixos, desconsiderando o eixo inserido pelo usuário.
-    - <strong>Uma checkbox "Eixo próprio" quando selecionada fara que objetos realizem a rotação como se o eixo de rotação atravessasse seu ponto central ao invés de rodar de fato ao redor do eixo no mundo.</strong>
+    - Uma checkbox "Eixo próprio" quando selecionada fara que objetos realizem a rotação como se o eixo de rotação atravessasse seu ponto central ao invés de rodar de fato ao redor do eixo no mundo.
 
   
 
@@ -61,3 +63,5 @@ make
 - A tela toda é um canvas, o viewport é apenas um retângulo preto de fundo branco.
 
 - Há três opções de *clipping* para wireframes, A opção de clipping selecionada é utilizada como base do clipping de poligonos preenchidos.
+
+- <strong> As curvas de Bezier sempre são clipadas completamente </strong>

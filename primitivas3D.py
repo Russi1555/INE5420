@@ -174,3 +174,100 @@ class Bezier3D(Objeto3D):
         curves = [f(1, curve)[0] for curve in rendered_lines]
 
         return curves, None
+
+class Curved3D(Wireframe):
+    def __init__(self, label: str, points: list, color = QColor(255,0,0)):
+        self.closed = False
+        self.label = label
+        self.color = color
+        self.__selecionado: bool = False
+        self.coord_world = list(map(lambda p: Ponto3D(p), points))
+        self.retalhos = [points[:16]]
+        points = points[16:]
+        while points != []:
+            self.retalhos.append(points[:16])
+            points = points[16:]
+        
+        self.retalhos = list(map(lambda pontos: Bezier3D("parte", pontos, color), self.retalhos))
+    
+        self.update_center_point()
+
+    def update_center_point(self):
+        cxacc, cyacc, czacc = self.retalhos[0][0]
+        for curva in self.retalhos:
+            cxacc += curva[-1][0]
+            cyacc += curva[-1][1]
+            czacc += curva[-1][2]
+        self.center_point = [cxacc/(len(self.retalhos)+1), 
+                             cyacc/(len(self.retalhos)+1),
+                             czacc/(len(self.retalhos)+1)]
+
+    def update_window(self, window):
+        self.window = window
+        for retalho in self.retalhos:
+            retalho.update_window(window)
+        
+    def update_viewport(self, xvw: int, yvw: int, widthvw: int, heigthvw: int) -> None:
+        super().update_viewport
+        for retalho in self.retalhos:
+            retalho.update_viewport(xvw, yvw, widthvw, heigthvw)
+
+    @property
+    def selecionado(self):
+        return self.__selecionado
+        
+    @selecionado.setter
+    def selecionado(self, v: bool):
+        for retalho in self.retalhos:
+            retalho.selecionado = v
+        self.__selecionado = v
+    
+    def translade(self, dx: float, dy: float, dz: float):
+        self.center_point[0] += dx
+        self.center_point[1] += dy
+        self.center_point[2] += dz
+        for retalho in self.retalhos:
+            retalho.translade(dx, dy, dz)
+    
+    def stretch(self, dx: int, dy: int, dz: int, center_point: tuple[float] = None):
+        matrix = np.array([[dx,0,0,0],
+                           [0,dy,0,0],
+                           [0,0,dz,0],
+                           [0,0,0,1]])
+        
+        if center_point is not None or True:
+            self.update_center_point()
+            x, y, z = self.center_point
+            to_cp = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[-x,-y,-z,1]])
+            from_cp = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[x,y,z,1]])
+            matrix = reduce(np.matmul,[to_cp, matrix,from_cp])
+        
+        self.transform(matrix)
+    
+    def rotate(self, rotation_matrix, rotation_axis: list[tuple[float]] = None):
+        if rotation_axis is not None:
+            self.update_center_point()
+            x0, y0, z0 = rotation_axis[0]
+            dx = self.center_point[0]-x0
+            dy = self.center_point[1]-y0
+            dz = self.center_point[2]-z0
+            to_own_axis = np.array([[1,0,0,0],
+                                    [0,1,0,0],
+                                    [0,0,1,0],
+                                    [-dx,-dy,-dz,1]])
+            from_own_axis = np.linalg.inv(to_own_axis)
+            rotation_matrix = reduce(np.matmul, [to_own_axis, rotation_matrix, from_own_axis])
+        self.transform(rotation_matrix)
+    
+    def transform(self, matrix):
+        for retalho in self.retalhos:
+            retalho.transform(matrix)
+
+    def render_to_view(self, clip_key: int, _: list = None, limiar_points: list = None):
+        retalhos = []
+        for retalho in self.retalhos:
+            curvas, _ = retalho.render_to_view(0, [])
+            curvas = list(filter(lambda l: l is not None, curvas))
+            retalhos += [curvas]
+ 
+        return retalhos, limiar_points

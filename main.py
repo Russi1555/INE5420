@@ -488,6 +488,14 @@ class MainWindow(QMainWindow):
                 for curva in curvas:
                     for linha in curva:
                         qp.drawLine(*linha)
+            
+            elif type(objeto) == Curved3D:
+                retalhos, _ = objeto.render_to_view(0)
+                for retalho in retalhos:
+                    for curva in retalho:
+                        for linha in curva:
+                            qp.drawLine(*linha)
+
             else:
                 # Renderizacao de wireframes e curvas de bezier normais
                 linhas, limiares = objeto.render_to_view(valor_clip if type(objeto) == Wireframe else valor_clip_curva, limiar_points=[])
