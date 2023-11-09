@@ -97,16 +97,16 @@ class Bezier3D(Objeto3D):
     def T(self, t: float):
         return np.array([t**3, t**2, t, 1])
     
-    def K(self, Gk, t: float, s: float):
+    def K(self, Gk, pre, post):
         Gk = [Gk[0:4], Gk[4:8], Gk[8:12], Gk[12:16]]
-        return reduce(np.matmul, [self.T(s), self.Mb, Gk, self.Mb, np.transpose(self.T(t))])
+        return reduce(np.matmul, [pre, Gk, post])
 
     def __init__(self, label: str, points: list, color = QColor(255,0,0)):
         self.closed = False
         self.label = label
         self.color = color
         self.selecionado: bool = False
-        self.coord_world = points
+        self.coord_world = list(map(lambda p: Ponto3D(p), points))
         self.Mb = np.array([[-1,3,-3,1],
                             [3,-6,3,0],
                             [-3,3,0,0],
@@ -126,13 +126,16 @@ class Bezier3D(Objeto3D):
         # miny = min(map(lambda p: p[1], points))
         # points_distance = ((maxx-minx)**2 + (maxy-miny)**2)**0.5
         # n_points =  int(min(50, max(10 , 60 * (points_distance/(2*2**0.5))**0.5)))
-        n_points = 20
+        n_points = 10
 
 
         # Gera os vetores para o eixo x e y
-        self.Gbx = np.array(list(map(lambda p: p[0], points)))
-        self.Gby = np.array(list(map(lambda p: p[1], points)))
-        self.Gbz = np.array(list(map(lambda p: p[2], points)))
+        Gx = np.array(list(map(lambda p: p[0], points)))
+        Gy = np.array(list(map(lambda p: p[1], points)))
+        Gz = np.array(list(map(lambda p: p[2], points)))
+        Gx = [Gx[0:4], Gx[4:8], Gx[8:12], Gx[12:16]]
+        Gy = [Gy[0:4], Gy[4:8], Gy[8:12], Gy[12:16]]
+        Gz = [Gz[0:4], Gz[4:8], Gz[8:12], Gz[12:16]]
 
         # Calcula todos os pontos a serem renderizados
         rendered_lines = []
@@ -142,30 +145,30 @@ class Bezier3D(Objeto3D):
         for p in range(0, n_points):
             this_curve = []
             s = p * step
+            pre = reduce(np.matmul, [self.T(s), self.Mb])
+            prex, prey, prez = [reduce(np.matmul, [pre, Gk]) for Gk in [Gx, Gy, Gz]]
             for p in range(0, n_points):
-                t = p * step 
-                this_curve.append((float(self.K(self.Gbx, t, s)),
-                                   float(self.K(self.Gby, t, s)),
-                                   float(self.K(self.Gbz, t, s))))
+                t = p * step
+                post = reduce(np.matmul, [self.Mb, np.transpose(self.T(t))])
+                this_curve.append([float(np.matmul(prek, post)) for prek in [prex, prey, prez]])
+
             rendered_lines.append(this_curve)
-            # print(f"new curve: {list(map(lambda e: (round(e[0],2), round(e[1],2), round(e[2],2)), this_curve))}")
         
         # fixa t varia s
         for p in range(0, n_points):
             this_curve = []
             t = p * step
+            post = reduce(np.matmul, [self.Mb, np.transpose(self.T(t))])
+            postx, posty, postz = [reduce(np.matmul, [Gk, post]) for Gk in [Gx, Gy, Gz]]
             for p in range(0, n_points):
-                s = p * step 
-                this_curve.append((float(self.K(self.Gbx, t, s)),
-                                   float(self.K(self.Gby, t, s)),
-                                   float(self.K(self.Gbz, t, s))))
+                s = p * step
+                pre = reduce(np.matmul, [self.T(s), self.Mb])
+                this_curve.append([float(np.matmul(pre, postk)) for postk in [postx, posty, postz]])
+
             rendered_lines.append(this_curve)
-            # print(f"new curve: {list(map(lambda e: (round(e[0],2), round(e[1],2), round(e[2],2)), this_curve))}")
 
         for i, curve in enumerate(rendered_lines):
             rendered_lines[i] = list(map(lambda p: (p[0], p[1], p[2]), curve))
-
-        sizes = [len(curve) for curve in rendered_lines]
 
         f = super().render_to_view
         curves = [f(1, curve)[0] for curve in rendered_lines]
