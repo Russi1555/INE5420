@@ -269,6 +269,7 @@ class MainWindow(QMainWindow):
         if nome == "":
             nome = f"objeto_{self.stdobjcount}"
             self.stdobjcount += 1
+        coords = coords.replace(";"," ")
         coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
         if cor[0] == cor[1] == cor[2] == "":
             cor = QtGui.QColor(255,0,0)
