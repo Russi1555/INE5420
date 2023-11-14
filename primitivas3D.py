@@ -81,7 +81,7 @@ class ViewWindow3D(Objeto3D):
     def ortogonal(self, points: list):
         points = list(map(lambda p: np.array((*p, 1)), points))
         new_points = list(map(lambda vec: vec.dot(self.revert_transformation), points))
-        snew_points = list(filter(lambda p: p[2] > 0, new_points))
+        new_points = list(filter(lambda p: p[2] > 0, new_points))
         new_points = list(map(lambda p: (p[0]/(p[2]/self.dist_focal), p[1]/(p[2]/self.dist_focal)), new_points))
         return new_points
     
@@ -118,15 +118,7 @@ class Bezier3D(Objeto3D):
         """
 
         points = self.coord_world
-
-        # Calcula o numero de pontos adequado baseado no tamanho relativo da curva para a window
-        # maxx = max(map(lambda p: p[0], points))
-        # minx = min(map(lambda p: p[0], points))
-        # maxy = max(map(lambda p: p[1], points))
-        # miny = min(map(lambda p: p[1], points))
-        # points_distance = ((maxx-minx)**2 + (maxy-miny)**2)**0.5
-        # n_points =  int(min(50, max(10 , 60 * (points_distance/(2*2**0.5))**0.5)))
-        n_points = 10
+        n_points = 3
 
 
         # Gera os vetores para o eixo x e y
@@ -271,3 +263,85 @@ class Curved3D(Wireframe):
             retalhos += [curvas]
  
         return retalhos, limiar_points
+
+class Spline3D(Objeto3D):
+    def __init__(self, label: str, points: list, color = QColor(255,0,0)):
+        self.closed = False
+        self.label = label
+        self.color = color
+        self.selecionado: bool = False
+        self.coord_world = points
+        self.control_points = points
+        # self.center_point: tuple = np.array([(points[0][0]+points[3][0])/2, (points[0][1]+points[3][1])/2])
+        self.Mb = np.array([[-1,3,-3,1],
+                            [3,-6,3,0],
+                            [-3,3,0,0],
+                            [1,0,0,0]])
+
+    def update_window(self, window):
+        super().update_window(window)
+        # self.translade(0,0,0)
+
+    def accDD(self, DD):
+        for DDk in DD:
+            for i in range(3):
+                for j in range(4):
+                    DDk[i][j] += DDk[i+1][j]
+        return DD
+    
+    def DesenhaCurvaFwdDiff(self, n, xo, yo, zo):
+        x = [k for k in xo]
+        y = [k for k in yo]
+        z = [k for k in zo] 
+        points = [(x[0],y[0],z[0])]
+        for _ in range(1, n):
+            for i in range(3):
+                x[i] += x[i+1]
+                y[i] += y[i+1]
+                z[i] += z[i+1]
+            points.append((x[0],y[0],z[0]))
+        return points
+    
+    def DesenhaSuperficieFwdDiff(self, n, Ck, Es, Et):
+        curves = []
+        DD = [reduce(np.matmul, [Es, C, Et]) for C in Ck]
+        for _ in range(n):
+            this_curve = self.DesenhaCurvaFwdDiff(n, DD[0][0], DD[1][0], DD[2][0])
+            curves.append(this_curve)
+            DD = self.accDD(DD)
+        DD = [np.transpose(reduce(np.matmul, [Es, C, Et])) for C in Ck]
+        for _ in range(n):
+            this_curve = self.DesenhaCurvaFwdDiff(n, DD[0][0], DD[1][0], DD[2][0])
+            curves.append(this_curve)
+            DD = self.accDD(DD)
+        return curves
+        
+    def render_to_view(self, clip_key: int, points: list = None, limiar_points: list = None):
+        control_points = self.control_points
+        n_points = 11
+        self.delta = [1/(n_points-1), (1/(n_points-1))**2, (1/(n_points-1))**3]
+
+        ks = [[p[i] for p in control_points] for i in range(3)]
+        ks = [np.array([ks[i][0:4], ks[i][4:8], ks[i][8:12], ks[i][12:16]]) for i in range(3)]
+        Ck = [reduce(np.matmul, [self.Mb, np.array(ks[i]), self.Mb]) for i in range(3)]
+
+        Ed = np.array([[0,0,0,1],
+                       [self.delta[2], self.delta[1], self.delta[0], 0],
+                       [6*self.delta[2], 2*self.delta[1], 0, 0],
+                       [6*self.delta[2], 0, 0, 0]])
+        
+        Edt = np.transpose(Ed)
+
+        curves = self.DesenhaSuperficieFwdDiff(n_points, Ck, Ed, Edt)
+        # print(len(curves))
+        # print([len(curve) for curve in curves])
+        
+        for i, curve in enumerate(curves):
+            # for point in curve:
+            #     print(point)
+            curves[i] = list(map(lambda p: (p[0], p[1], p[2]), curve))
+
+        f = super().render_to_view
+        curves = [f(1, curve)[0] for curve in curves]
+
+        return curves, None

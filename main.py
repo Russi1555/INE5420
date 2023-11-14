@@ -484,7 +484,7 @@ class MainWindow(QMainWindow):
             #         for linha in linhas:
             #             if linha != []: qp.drawLine(*linha)
 
-            if type(objeto) == Bezier3D:
+            if type(objeto) in [Bezier3D, Spline3D]:
                 curvas, _ = objeto.render_to_view(0)
                 for curva in curvas:
                     for linha in curva:
