@@ -118,7 +118,7 @@ class Bezier3D(Objeto3D):
         """
 
         points = self.coord_world
-        n_points = 3
+        n_points = 11
 
 
         # Gera os vetores para o eixo x e y
@@ -166,13 +166,13 @@ class Bezier3D(Objeto3D):
         curves = [f(1, curve)[0] for curve in rendered_lines]
 
         return curves, None
-
+    
 class Curved3D(Wireframe):
     def __init__(self, label: str, points: list, color = QColor(255,0,0)):
         self.closed = False
         self.label = label
         self.color = color
-        self.__selecionado: bool = False
+        self.sel: bool = False
         self.coord_world = list(map(lambda p: Ponto3D(p), points))
         self.retalhos = [points[:16]]
         points = points[16:]
@@ -206,13 +206,13 @@ class Curved3D(Wireframe):
 
     @property
     def selecionado(self):
-        return self.__selecionado
+        return self.sel
         
     @selecionado.setter
     def selecionado(self, v: bool):
         for retalho in self.retalhos:
             retalho.selecionado = v
-        self.__selecionado = v
+        self.sel = v
     
     def translade(self, dx: float, dy: float, dz: float):
         self.center_point[0] += dx
@@ -270,7 +270,7 @@ class Spline3D(Objeto3D):
         self.label = label
         self.color = color
         self.selecionado: bool = False
-        self.coord_world = points
+        self.coord_world = list(map(lambda p: Ponto3D(p), points))
         self.control_points = points
         # self.center_point: tuple = np.array([(points[0][0]+points[3][0])/2, (points[0][1]+points[3][1])/2])
         self.Mb = np.array([[-1,3,-3,1],
@@ -317,7 +317,7 @@ class Spline3D(Objeto3D):
         return curves
         
     def render_to_view(self, clip_key: int, points: list = None, limiar_points: list = None):
-        control_points = self.control_points
+        control_points = self.coord_world
         n_points = 11
         self.delta = [1/(n_points-1), (1/(n_points-1))**2, (1/(n_points-1))**3]
 
@@ -345,3 +345,27 @@ class Spline3D(Objeto3D):
         curves = [f(1, curve)[0] for curve in curves]
 
         return curves, None
+
+class MegaSpline(Curved3D):
+    def __init__(self, label: str, matrix_points: list, color = QColor(255,0,0)):
+        self.closed = False
+        self.label = label
+        self.color = color
+        self.sel: bool = False
+        self.control_points = matrix_points
+        self.retalhos: list[Spline3D] = []
+        for y in range(len(matrix_points)-3):
+            for x in range(len(matrix_points[0])-3):
+                this_sub_spline = []
+                for yi in range(y, y+4):
+                    for xi in range(x, x+4):
+                        this_sub_spline.append(matrix_points[yi][xi])
+                self.retalhos.append(Spline3D("parte", this_sub_spline, self.color))
+        print(len(self.retalhos))
+        self.update_center_point()
+
+    def render_to_view(self, clip_key: int, points: list = None, limiar_points: list = None):
+        all_curves = []
+        for retalho in self.retalhos:
+            all_curves += retalho.render_to_view(clip_key, None, [])[0]
+        return all_curves, 0

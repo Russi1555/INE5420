@@ -5,7 +5,7 @@ Modulo com especializacoes de alguns widgets usados no projeto.
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QMainWindow, QCheckBox, QComboBox
 from primitivas2D import Wireframe, Wireframe_filled, Curved2D, BSpline
-from primitivas3D import Objeto3D, Curved3D, Spline3D
+from primitivas3D import Objeto3D, Curved3D, Spline3D, MegaSpline
 
 class WindowInput(QMainWindow):
     '''
@@ -64,7 +64,7 @@ class WindowInput(QMainWindow):
 
         self.chose_object = QComboBox(self.centralwidget)
         # self.chose_object.addItems({"Open Wireframe": "Open Wireframe", "Closed Wireframe": "Closed Wireframe", "Polygon": "Polygon", "Curved2D": "Curved2D", "BSpline": "BSpline", "Objeto3D":"Objeto3D"})
-        self.chose_object.addItems({"Objeto3D":"Objeto3D", "Curved3D":"Curved3D", "Spline3D": "Spline3D"})
+        self.chose_object.addItems({"Objeto3D":"Objeto3D", "Curved3D":"Curved3D", "Spline3D": "Spline3D", "MegaSpline": "MegaSpline"})
 
         self.chose_object.setGeometry(130, 130, 155, 30)
 
@@ -84,7 +84,7 @@ class WindowInput(QMainWindow):
         emite os valores introduzidos nas caixas de texto para serem recebidos pela janela principal
         '''
         # type_map = {"BSpline": BSpline, "Polygon": Wireframe_filled, "Curved2D": Curved2D, "Closed Wireframe": Wireframe, "Open Wireframe": Wireframe, "Objeto3D":Objeto3D}
-        type_map = {"Objeto3D": Objeto3D, "Curved3D": Curved3D, "Spline3D": Spline3D}
+        type_map = {"Objeto3D": Objeto3D, "Curved3D": Curved3D, "Spline3D": Spline3D, "MegaSpline": MegaSpline}
         object_type = type_map[self.chose_object.currentText()]
         self.submitClicked.emit((self.nome.text(), self.coords.text(), [self.r.text(),self.g.text(),self.b.text()], object_type, self.chose_object.currentText() == "Closed Wireframe"))
         self.close()

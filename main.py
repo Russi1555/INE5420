@@ -269,8 +269,19 @@ class MainWindow(QMainWindow):
         if nome == "":
             nome = f"objeto_{self.stdobjcount}"
             self.stdobjcount += 1
-        coords = coords.replace(";"," ")
-        coords = list(map(lambda p: tuple(map(lambda v: float(v), p[1:-1].split(","))), coords.split()))
+        # Neste ponto coords sao um conjunto de linhas do tipo ['(x,y,z)(x,y,z)...']
+        coords = coords.replace(" ","").replace("\n","").split(";")
+        parsed_coords = []
+        for line in coords:
+            parsed_line = []
+            line = line.split(")(")
+            line[0] = line[0][1:]
+            line[-1] = line[-1][:-1]
+            # Neste ponto line eh uma lista do tipo [['x,y,z'],['x,y,z']...]
+            for point in line:
+                parsed_line.append([float(v) for v in point.split(',')])
+            parsed_coords.append(parsed_line)
+        coords = parsed_coords
         if cor[0] == cor[1] == cor[2] == "":
             cor = QtGui.QColor(255,0,0)
         else:
@@ -484,7 +495,7 @@ class MainWindow(QMainWindow):
             #         for linha in linhas:
             #             if linha != []: qp.drawLine(*linha)
 
-            if type(objeto) in [Bezier3D, Spline3D]:
+            if type(objeto) in [Bezier3D, Spline3D, MegaSpline]:
                 curvas, _ = objeto.render_to_view(0)
                 for curva in curvas:
                     for linha in curva:
