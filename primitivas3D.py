@@ -359,6 +359,7 @@ class MegaSpline(Curved3D):
         self.color = color
         self.sel: bool = False
         self.control_points = matrix_points
+        self.coord_world = [Ponto3D(item) for linha in matrix_points for item in linha]
         self.dimensions = (len(matrix_points[0]), len(matrix_points))
         self.retalhos: list[Spline3D] = []
         for y in range(len(matrix_points)-3):

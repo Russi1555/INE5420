@@ -99,6 +99,15 @@ class MainWindow(QMainWindow):
             self.lista_objetos.clear()
             objetos = self.descritor.load_objs()
             for nome, obj in objetos.items():
+                # Caso especial onde temos uma megaspline e temos que reconstruir a matriz a partir de uma lista achatada
+                if "dimensions" in obj.keys():
+                    matrix = []
+                    for y in range(obj["dimensions"][1]):
+                        linha = []
+                        for x in range(obj["dimensions"][0]):
+                            linha.append(obj["points"][x+y*obj["dimensions"][0]])
+                        matrix.append(linha)
+                    obj["points"] = matrix
                 novo_obj = obj["type"](obj["name"], obj["points"], obj["color"])
                 self.objetos[nome] = novo_obj
                 self.objetos[nome].update_viewport(self.viewport.x(), self.viewport.y(), self.viewport.width(), self.viewport.height())

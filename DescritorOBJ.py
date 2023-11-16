@@ -24,18 +24,7 @@ class DescritorOBJ:
             for objeto in objetos.values():
                 if objeto.label in {"fake window", "x", "y", "z", "axis"}: continue
                 escrita_futura_coords = "x "
-
-                if type(objeto) == Curved3D:
-                    coordenadas = objeto.coord_world
-                    # for i, segmento in enumerate(objeto.curvas):
-                    #     if not i:
-                    #         coordenadas.append(segmento[0])
-                    #     for ponto in segmento[1:]:
-                    #         coordenadas.append(ponto)
-                elif type(objeto) == BSpline: coordenadas = objeto.control_points
-                else: coordenadas = objeto.coord_world
-
-
+                coordenadas = objeto.coord_world
                 escrita_v = ""
 
                 if len(coordenadas) == 1:
@@ -102,6 +91,8 @@ class DescritorOBJ:
                 # Identifica o inicio da descricao de um objeto
                 elif identficador == 'o':
                     current_object["name"] = info[1]
+                    if len(info) > 2:
+                        current_object["dimensions"] = (int(info[2]), int(info[3]))
 
                 # Indetifica uma cor RGB a ser lida
                 elif identficador == "Kd":
