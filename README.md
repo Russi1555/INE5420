@@ -6,13 +6,13 @@
 
 <li><STRONG>Requisitos:</STRONG></li>
 
-PyQt5
+        PyQt5
 
-numpy
+        numpy
 
 <li><strong>Iniciando:</strong></li>
 
-make
+        make
 
 <li><strong>Criando um novo objeto:</strong></li>
 
@@ -23,13 +23,15 @@ make
 2. Insira seu nome
 
 3. Insira as coordenadas (Formato: (x0, y0, z0) (x1, y1, z1) (x2, y2, z2)...)
-    - Coordenadas para um cubo e tetraedro estão disponíveis no arquivo sample.
+    - Coordenadas para um cubo, tetraedro e algumas curvas estão disponíveis no arquivo sample.
 
 4. Um código RGB pode ser inserido para definir a cor do objeto, caso não inserido o padrão é 255 0 0.
 
 5. Um seletor permite escolher o tipo de objeto criado a partir das coordenadas.
 
-    - <strong>Para criar uma curva de bezier o número de pontos inseridores tem de ser múltiplo de 16. Não coloque ';' para separar linhas, coloque todos os pontos de forma corrida. (Um exemplo de curva está disponível no arquivo sample) </strong>
+    - Para criar uma curva de bezier o número de pontos inseridores tem de ser múltiplo de 16. O simbolo ; é desconsiderado para curvas Bezier, de 16 em 16 pontos corridos será formado um retalho.
+
+    - <strong> Para criar splines o simbolo ; é considerado, ele atua como um separador de linhas da matriz que cria a spline. Esta matriz tem de ter pelo menos 4x4 em dimensões.</strong>
 
 
 <li><strong>Transformacoes:</strong> Há um pad com as transformações na esquerda da interface.</li>
@@ -60,8 +62,20 @@ make
 
 <li><strong>Clipping:</li></strong>
 
+
 - A tela toda é um canvas, o viewport é apenas um retângulo preto de fundo branco.
 
 - Há três opções de *clipping* para wireframes, A opção de clipping selecionada é utilizada como base do clipping de poligonos preenchidos.
 
-- <strong> As curvas de Bezier sempre são clipadas completamente </strong>
+- <strong> Curvas de Bezier e Splines sempre são clipadas completamente </strong>
+
+<li><strong>Persistência de Objetos:</li></strong>
+
+- <strong>Os botões Salvar Objetos e Carregar objetos de versões anteriores foi restaurado e funciona como anteriormente.</strong>
+
+- <strong>Os caracteres b para objetos identificam curvas de bezier e s splines. Objetos Spline tem de ter as dimensões de sua matriz de pontos de controle explicitamente ao lado do nome no formato:</strong>
+        
+        b nome x y
+
+
+
