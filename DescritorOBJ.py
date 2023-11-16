@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from PyQt5 import QtGui, QtWidgets, QtCore
 from primitivas2D import Wireframe, Wireframe_filled, Curved2D, BSpline
+from primitivas3D import *
 
 class DescritorOBJ:
     def __init__(self):
@@ -21,6 +22,7 @@ class DescritorOBJ:
             dic_verticies = dict()
             contador_v = 1
             for objeto in objetos.values():
+                if objeto.label in {"fake window", "x", "y", "z", "axis"}: continue
                 escrita_futura_coords = "x "
 
                 if type(objeto) == Curved2D:
@@ -48,7 +50,7 @@ class DescritorOBJ:
                     for coord in coordenadas:
                         if coord not in dic_verticies:
                             dic_verticies[coord] = contador_v
-                            escrita_v += "\n" + "v "+ str(coord[0]) + " " + str(coord[1]) + " " + "0"
+                            escrita_v += "\n" + "v "+ str(coord[0]) + " " + str(coord[1]) + " " + str(coord[2])
                             contador_v += 1
                         escrita_futura_coords += str(dic_verticies[coord]) + " " #TESTAR
 
@@ -62,8 +64,9 @@ class DescritorOBJ:
                         escrita_futura_coords="l"+ escrita_futura_coords[1:]
 
                 
-                
-                escrita_cores = objeto.color.getRgb()
+                # print(objeto.color)
+                # escrita_cores = objeto.color.getRgb()
+                escrita_cores = [255,0,0]
                 escrita_cores = "Kd " + str(escrita_cores[0]) + " " + str(escrita_cores[1]) + " " + str(escrita_cores[2])
                 fila_para_escrita.append(escrita_cores)
                 fila_para_escrita.append(escrita_futura_coords)
@@ -83,7 +86,7 @@ class DescritorOBJ:
         with open("objetos/cena.obj", "r") as arquivo:
             vetores, objetos = {}, {}
             contador_vetores = 1
-            type_map = {"s": BSpline, "f": Wireframe_filled, "b": Curved2D, "l": Wireframe}
+            type_map = {"s": BSpline, "f": Wireframe_filled, "b": Curved2D, "l": Objeto3D}
             current_object = {"name": "", "points": None, "color": QtGui.QColor(255,0,0), "type": None}
             for linha in arquivo:
 
@@ -105,18 +108,18 @@ class DescritorOBJ:
                     
                     # Carrega o objeto atual e inicia um novo
                     objetos[current_object["name"]] = current_object
-                    current_object = {"name": "", "points": None, "color": QtGui.QColor(255,0,0), "type": None}
-                   
+                    current_object = {"name": "", "points": None, "color": QtGui.QColor(255,0,0), "type": None}                   
 
                 # Identifica a lista de pontos do objeto e seu tipo e o carrega
                 else:
                     for key in info[1:]:
-                        ponto = (float(vetores[int(key)][0]), float((vetores[int(key)])[1]))
+                        ponto = [float((vetores[int(key)])[i]) for i in range(3)]
                         if current_object["points"] is None: current_object["points"] = []
                         current_object["points"].append(ponto)
 
                     # Salva o tipo correto
                     current_object["type"] = type_map[identficador]
+                    # print(current_object)
                              
         return objetos
 

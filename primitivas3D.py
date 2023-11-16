@@ -22,6 +22,7 @@ class Ponto3D(Wireframe):
 class Objeto3D(Wireframe):
     
     def __init__(self, label: str, coord_list: list[tuple[int]], color = QColor(255,0,0)) -> None:
+        # if label == "objeto_0": print(f"Im creating a 3d object like this:\nlabel: {label}\npoints: {coord_list}\ncolor: {color}")
         super().__init__(label, coord_list, color, True)
         self.coord_world = [Ponto3D(p) for p in coord_list]
 
@@ -80,6 +81,7 @@ class ViewWindow3D(Objeto3D):
     
     def ortogonal(self, points: list):
         points = list(map(lambda p: np.array((*p, 1)), points))
+        # for vec in points: print(vec)
         new_points = list(map(lambda vec: vec.dot(self.revert_transformation), points))
         new_points = list(filter(lambda p: p[2] > 0, new_points))
         new_points = list(map(lambda p: (p[0]/(p[2]/self.dist_focal), p[1]/(p[2]/self.dist_focal)), new_points))

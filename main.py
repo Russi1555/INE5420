@@ -181,10 +181,10 @@ class MainWindow(QMainWindow):
         button("Novo Objeto", 50,20,100,30, novo_botao)
         
         # Bota de salvar objetos
-        # button("Salvar Objetos",30,265,130,30, salvar_objetos )
+        button("Salvar Objetos",30,265,130,30, salvar_objetos )
 
-        # # Bota de carregar objetos
-        # button("Carregar Objetos",30,305,130,30, carregar_objetos )
+        # Bota de carregar objetos
+        button("Carregar Objetos",30,305,130,30, carregar_objetos )
         
         # Ancoras dos botoes
         atx, aty = 45, 350
@@ -281,7 +281,7 @@ class MainWindow(QMainWindow):
             for point in line:
                 parsed_line.append([float(v) for v in point.split(',')])
             parsed_coords.append(parsed_line)
-        coords = parsed_coords
+        coords = parsed_coords if len(parsed_coords) > 1 else parsed_coords[0]
         if cor[0] == cor[1] == cor[2] == "":
             cor = QtGui.QColor(255,0,0)
         else:
