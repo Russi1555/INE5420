@@ -281,13 +281,18 @@ class MainWindow(QMainWindow):
             for point in line:
                 parsed_line.append([float(v) for v in point.split(',')])
             parsed_coords.append(parsed_line)
+        if object_type == Curved3D:
+            flat = []
+            for line in coords:
+                flat += line
+            coords = flat
         coords = parsed_coords if len(parsed_coords) > 1 else parsed_coords[0]
         if cor[0] == cor[1] == cor[2] == "":
             cor = QtGui.QColor(255,0,0)
         else:
             cor = list(map(lambda e: 0 if e == "" else min(int(e),255), cor))
             cor = QtGui.QColor(cor[0],cor[1],cor[2])
-        if coords == "" or object_type == Curved2D and (len(coords)-4) % 3:
+        if coords == "" or (object_type == Curved2D and (len(coords)-4)) % 3 or (object_type == Curved3D and len(coords)%16):
             print("VALORES INVALIDOS")
         else:
             self.lista_objetos.addItem(str(nome))

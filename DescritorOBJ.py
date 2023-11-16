@@ -25,13 +25,13 @@ class DescritorOBJ:
                 if objeto.label in {"fake window", "x", "y", "z", "axis"}: continue
                 escrita_futura_coords = "x "
 
-                if type(objeto) == Curved2D:
-                    coordenadas = []
-                    for i, segmento in enumerate(objeto.curvas):
-                        if not i:
-                            coordenadas.append(segmento[0])
-                        for ponto in segmento[1:]:
-                            coordenadas.append(ponto)
+                if type(objeto) == Curved3D:
+                    coordenadas = objeto.coord_world
+                    # for i, segmento in enumerate(objeto.curvas):
+                    #     if not i:
+                    #         coordenadas.append(segmento[0])
+                    #     for ponto in segmento[1:]:
+                    #         coordenadas.append(ponto)
                 elif type(objeto) == BSpline: coordenadas = objeto.control_points
                 else: coordenadas = objeto.coord_world
 
@@ -56,9 +56,9 @@ class DescritorOBJ:
 
                     if type(objeto) == Wireframe_filled:
                         escrita_futura_coords="f"+ escrita_futura_coords[1:]
-                    elif type(objeto) == Curved2D:
+                    elif type(objeto) == Curved3D:
                         escrita_futura_coords="b"+escrita_futura_coords[1:]
-                    elif type(objeto) == BSpline:
+                    elif type(objeto) == MegaSpline:
                         escrita_futura_coords="s"+escrita_futura_coords[1:]
                     else:
                         escrita_futura_coords="l"+ escrita_futura_coords[1:]
@@ -71,6 +71,7 @@ class DescritorOBJ:
                 fila_para_escrita.append(escrita_cores)
                 fila_para_escrita.append(escrita_futura_coords)
                 escrita_futura_nome = "o "+objeto.label
+                if type(objeto) == MegaSpline: escrita_futura_nome+=f" {objeto.dimensions[0]} {objeto.dimensions[1]}"
                 fila_para_escrita.append(escrita_futura_nome)
 
                 arquivo.write(escrita_v) #isso definitivamente precisa
@@ -86,7 +87,7 @@ class DescritorOBJ:
         with open("objetos/cena.obj", "r") as arquivo:
             vetores, objetos = {}, {}
             contador_vetores = 1
-            type_map = {"s": BSpline, "f": Wireframe_filled, "b": Curved2D, "l": Objeto3D}
+            type_map = {"s": MegaSpline, "f": Wireframe_filled, "b": Curved3D, "l": Objeto3D}
             current_object = {"name": "", "points": None, "color": QtGui.QColor(255,0,0), "type": None}
             for linha in arquivo:
 

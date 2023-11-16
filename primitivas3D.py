@@ -175,7 +175,7 @@ class Curved3D(Wireframe):
         self.label = label
         self.color = color
         self.sel: bool = False
-        self.coord_world = list(map(lambda p: Ponto3D(p), points))
+        self.coord_world: list[Ponto3D] = list(map(lambda p: Ponto3D(p), points))
         self.retalhos = [points[:16]]
         points = points[16:]
         while points != []:
@@ -222,6 +222,8 @@ class Curved3D(Wireframe):
         self.center_point[2] += dz
         for retalho in self.retalhos:
             retalho.translade(dx, dy, dz)
+        for ponto in self.coord_world:
+            ponto.transform(np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[dx,dy,dz,1]]))
     
     def stretch(self, dx: int, dy: int, dz: int, center_point: tuple[float] = None):
         matrix = np.array([[dx,0,0,0],
@@ -256,6 +258,8 @@ class Curved3D(Wireframe):
     def transform(self, matrix):
         for retalho in self.retalhos:
             retalho.transform(matrix)
+        for point in self.coord_world:
+            point.transform(matrix)
 
     def render_to_view(self, clip_key: int, _: list = None, limiar_points: list = None):
         retalhos = []
@@ -355,6 +359,7 @@ class MegaSpline(Curved3D):
         self.color = color
         self.sel: bool = False
         self.control_points = matrix_points
+        self.dimensions = (len(matrix_points[0]), len(matrix_points))
         self.retalhos: list[Spline3D] = []
         for y in range(len(matrix_points)-3):
             for x in range(len(matrix_points[0])-3):

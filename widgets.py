@@ -64,7 +64,7 @@ class WindowInput(QMainWindow):
 
         self.chose_object = QComboBox(self.centralwidget)
         # self.chose_object.addItems({"Open Wireframe": "Open Wireframe", "Closed Wireframe": "Closed Wireframe", "Polygon": "Polygon", "Curved2D": "Curved2D", "BSpline": "BSpline", "Objeto3D":"Objeto3D"})
-        self.chose_object.addItems({"Objeto3D":"Objeto3D", "Curved3D":"Curved3D", "Spline3D": "Spline3D", "MegaSpline": "MegaSpline"})
+        self.chose_object.addItems({"Objeto3D":"Objeto3D", "Curved3D":"Curved3D", "MegaSpline": "MegaSpline"})
 
         self.chose_object.setGeometry(130, 130, 155, 30)
 
